@@ -18,7 +18,12 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
  * The kernel will extract those and pass them to the plugin,
  * which are built into the context object from setup().
  */
-export const pluginSettingsSchema = T.Object({});
+export const pluginSettingsSchema = T.Object({
+  collaboratorMinimumApprovalsRequired: T.Number({ default: 0 }),
+  contributorMinimumApprovalsRequired: T.Number({ default: 1 }),
+  collaboratorMergeTimeout: T.String({ default: "3.5 days" }),
+  contributorMergeTimeout: T.String({ default: "7 days" }),
+});
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
 
 export type PluginSettings = StaticDecode<typeof pluginSettingsSchema>;

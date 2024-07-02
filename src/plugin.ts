@@ -1,5 +1,6 @@
 import { Octokit } from "@octokit/rest";
 import { createClient } from "@supabase/supabase-js";
+import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { createAdapters } from "./adapters";
 import { Env, PluginInputs } from "./types";
 import { Context } from "./types";
@@ -17,29 +18,13 @@ export async function plugin(inputs: PluginInputs, env: Env) {
     config: inputs.settings,
     octokit,
     env,
-    logger: {
-      debug(message: unknown, ...optionalParams: unknown[]) {
-        console.debug(message, ...optionalParams);
-      },
-      info(message: unknown, ...optionalParams: unknown[]) {
-        console.log(message, ...optionalParams);
-      },
-      warn(message: unknown, ...optionalParams: unknown[]) {
-        console.warn(message, ...optionalParams);
-      },
-      error(message: unknown, ...optionalParams: unknown[]) {
-        console.error(message, ...optionalParams);
-      },
-      fatal(message: unknown, ...optionalParams: unknown[]) {
-        console.error(message, ...optionalParams);
-      },
-    },
+    logger: new Logs("debug"),
     adapters: {} as ReturnType<typeof createAdapters>,
   };
 
   context.adapters = createAdapters(supabase, context);
 
-  if (context.eventName === "issue_comment.created") {
+  if (context.eventName === "pull_request.opened") {
     // do something
   } else {
     context.logger.error(`Unsupported event: ${context.eventName}`);

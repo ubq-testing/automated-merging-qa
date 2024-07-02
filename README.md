@@ -1,4 +1,4 @@
-# `@ubiquibot/plugin-template`
+# `@ubiquibot/automated-merging`
 
 ## Prerequisites
 
