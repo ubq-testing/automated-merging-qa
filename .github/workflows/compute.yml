@@ -1,4 +1,4 @@
-name: "the name of the plugin"
+name: "Automated Merging"
 
 on:
   workflow_dispatch:
@@ -21,21 +21,21 @@ concurrency:
 
 jobs:
   compute:
-    name: "plugin name"
+    name: "Automated Merging"
     runs-on: ubuntu-latest
     permissions: write-all
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: setup node
+      - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: "20.10.0"
 
-      - name: install dependencies
-        run: yarn
+      - name: Install dependencies
+        run: yarn install --immutable --immutable-cache --check-cache
 
-      - name: execute directive
+      - name: Execute directive
         run: npx tsx ./src/main.ts
-        id: plugin-name
+        id: automated-merging
