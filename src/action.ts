@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import * as github from "@actions/github";
 import { Octokit } from "@octokit/rest";
 import { Value } from "@sinclair/typebox/value";

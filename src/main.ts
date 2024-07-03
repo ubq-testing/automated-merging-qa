@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import * as core from "@actions/core";
 import { run } from "./action";
 
