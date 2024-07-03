@@ -50,6 +50,7 @@ jobs:
           git add database/sql.db
           if [ -n "$(git diff-index --cached --name-only HEAD)" ]; then
             git commit -m "chore: [skip ci] updated database" || echo "Lint-staged check failed"
+            git pull
             git push origin main
           else
             echo "No changes to commit"
