@@ -4,7 +4,6 @@ import { createAdapters } from "./adapters";
 import { initializeDataSource } from "./adapters/sqlite/data-source";
 import { proxyCallbacks } from "./proxy";
 import { Context, Env, PluginInputs } from "./types";
-import "reflect-metadata";
 
 /**
  * How a worker executes the plugin.
