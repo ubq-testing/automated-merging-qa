@@ -5,7 +5,7 @@ import { createAdapters } from "../adapters";
 import { Env } from "./env";
 import { PluginSettings } from "./plugin-inputs";
 
-export type SupportedEventsU = "pull_request.opened" | "pull_request.reopened" | "pull_request.closed";
+export type SupportedEventsU = "pull_request.opened" | "pull_request.reopened";
 
 export type SupportedEvents = {
   [K in SupportedEventsU]: K extends WebhookEventName ? WebhookEvent<K> : never;

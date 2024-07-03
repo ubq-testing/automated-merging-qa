@@ -2,6 +2,7 @@ import { Octokit } from "@octokit/rest";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { createAdapters } from "./adapters";
 import { initializeDataSource } from "./adapters/sqlite/data-source";
+import { proxyCallbacks } from "./proxy";
 import { Context, Env, PluginInputs } from "./types";
 import "reflect-metadata";
 
@@ -23,10 +24,5 @@ export async function plugin(inputs: PluginInputs, env: Env) {
   };
 
   context.adapters = createAdapters(dataSource, context);
-
-  if (context.eventName === "pull_request.opened") {
-    // do something
-  } else {
-    context.logger.error(`Unsupported event: ${context.eventName}`);
-  }
+  return proxyCallbacks[inputs.eventName](context, env);
 }
