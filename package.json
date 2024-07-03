@@ -35,7 +35,10 @@
     "@supabase/supabase-js": "2.43.5",
     "@ubiquity-dao/ubiquibot-logger": "1.1.2",
     "dotenv": "16.4.5",
-    "typebox-validators": "0.3.5"
+    "reflect-metadata": "0.2.2",
+    "sqlite3": "5.1.7",
+    "typebox-validators": "0.3.5",
+    "typeorm": "0.3.20"
   },
   "devDependencies": {
     "@commitlint/cli": "19.3.0",
