@@ -1713,7 +1713,7 @@
   dependencies:
     "@octokit/types" "^12.6.0"
 
-"@octokit/request-error@^5.1.0":
+"@octokit/request-error@5.1.0", "@octokit/request-error@^5.1.0":
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/@octokit/request-error/-/request-error-5.1.0.tgz#ee4138538d08c81a60be3f320cd71063064a3b30"
   integrity sha512-GETXfE05J0+7H2STzekpKObFe765O5dlAKUTLNGeH+x47z7JjXHfsHKo5z21D/o/IOZTUEI6nyWyR+bZVP/n5Q==
@@ -2081,10 +2081,10 @@
     "@typescript-eslint/types" "7.13.1"
     eslint-visitor-keys "^3.4.3"
 
-"@ubiquity-dao/ubiquibot-logger@1.1.2":
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/@ubiquity-dao/ubiquibot-logger/-/ubiquibot-logger-1.1.2.tgz#d614ebde407517489756b6f2c1c91850c308d8fb"
-  integrity sha512-91XwVKsG47jNUV0b/usNFZi0lwPnDp+ci2BDhkF5KQkkKU0Lct91EyF9FQmnXmOARb76vbOwbPozDyyq7nLI/w==
+"@ubiquity-dao/ubiquibot-logger@1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@ubiquity-dao/ubiquibot-logger/-/ubiquibot-logger-1.2.0.tgz#c636edb299e22dc4f55e4cab64cc8d976d89fbf4"
+  integrity sha512-CgnfbiIZNc7CVrGfHKksIdbeehc6pG7qEfUMTS4vyNlPnIa0OnQeigGbn6zKvkUvIRvJ9oj0gqFATs7vGDoL4w==
 
 JSONStream@^1.3.5:
   version "1.3.5"

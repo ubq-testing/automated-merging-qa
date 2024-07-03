@@ -40,12 +40,12 @@ export class PullRequestAdapter extends Super {
   public async update(url: string, lastActivity: Date) {
     try {
       const repository = this.sqlite.getRepository(PullRequest);
-      const itemtoUpdate = await repository.findOneBy({
+      const itemToUpdate = await repository.findOneBy({
         url,
       });
-      if (itemtoUpdate) {
-        itemtoUpdate.lastActivity = lastActivity;
-        await itemtoUpdate.save();
+      if (itemToUpdate) {
+        itemToUpdate.lastActivity = lastActivity;
+        await itemToUpdate.save();
       } else {
         this.context.logger.error(`Could not find item for update ${url}`);
       }

@@ -1,7 +1,8 @@
+import { RequestError } from "@octokit/request-error";
 import ms from "ms";
 import { getAllTimelineEvents } from "../handlers/github-events";
 import { Context } from "../types";
-import { parseGitHubUrl } from "./github-url";
+import { IssueParams, parseGitHubUrl } from "./github-url";
 
 type IssueEvent = {
   created_at?: string;
@@ -9,6 +10,23 @@ type IssueEvent = {
   timestamp?: string;
   commented_at?: string;
 };
+
+async function isPullMerged(context: Context, { repo, owner, issue_number: pullNumber }: IssueParams) {
+  try {
+    await context.octokit.pulls.checkIfMerged({
+      repo,
+      owner,
+      pull_number: pullNumber,
+    });
+
+    return true;
+  } catch (e) {
+    if (e instanceof RequestError) {
+      return e.status !== 204;
+    }
+    return false;
+  }
+}
 
 export async function updatePullRequests(context: Context) {
   const pullRequests = await context.adapters.sqlite.pullRequest.getAll();
@@ -18,6 +36,13 @@ export async function updatePullRequests(context: Context) {
   }
   for (const pullRequest of pullRequests) {
     try {
+      const gitHubUrl = parseGitHubUrl(pullRequest.url);
+      const { repo, owner, issue_number } = gitHubUrl;
+      context.logger.debug(`Processing pull-request ${pullRequest.url}...`);
+      if (await isPullMerged(context, gitHubUrl)) {
+        context.logger.info(`The pull request ${pullRequest.url} is already merged, nothing to do.`);
+        continue;
+      }
       const activity = await getAllTimelineEvents(context, parseGitHubUrl(pullRequest.url));
       const eventDates: Date[] = activity
         .map((event) => {
@@ -29,13 +54,21 @@ export async function updatePullRequests(context: Context) {
       const lastActivityDate = new Date(Math.max(...eventDates.map((date) => date.getTime())));
 
       if (isPastOffset(lastActivityDate, context.config.collaboratorMergeTimeout)) {
-        // Should close PR
+        context.logger.info(
+          `Pull-request ${pullRequest.url} is past its due date (${context.config.collaboratorMergeTimeout} after ${lastActivityDate.toISOString()}), will merge.`
+        );
         await context.adapters.sqlite.pullRequest.delete(pullRequest.url);
+        await context.octokit.pulls.merge({
+          owner,
+          repo,
+          pull_number: issue_number,
+        });
       } else {
         await context.adapters.sqlite.pullRequest.update(pullRequest.url, lastActivityDate);
+        context.logger.info(`Updated PR ${pullRequest.url} to a new timestamp (${lastActivityDate})`);
       }
     } catch (e) {
-      context.logger.error(`Could not get activity for pull-request ${pullRequest.url}: ${e}`);
+      context.logger.error(`Could not process pull-request ${pullRequest.url} for auto-merge: ${e}`);
     }
   }
 }
