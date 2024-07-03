@@ -7,4 +7,7 @@ export class PullRequest extends BaseEntity {
 
   @Column({ unique: true, type: "text" })
   url: string;
+
+  @Column({ type: "datetime" })
+  lastActivity: Date;
 }
