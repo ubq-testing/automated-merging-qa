@@ -12,14 +12,15 @@ const htmlUrl = "https://github.com/ubiquibot/automated-merging/pull/1";
 const actionsGithubPackage = "@actions/github";
 
 describe("Action tests", () => {
+  const dbName = `database/tests/${expect.getState().currentTestName}.db`;
+
   beforeEach(() => {
     jest.resetAllMocks();
     jest.resetModules();
+    fs.rmSync(dbName, { force: true });
   });
 
   it("Should add a pull request in the DB on PR opened", async () => {
-    const dbName = `database/${expect.getState().currentTestName}.db`;
-    fs.rmSync(dbName, { force: true });
     jest.mock(actionsGithubPackage, () => ({
       context: {
         repo: {
@@ -56,8 +57,6 @@ describe("Action tests", () => {
   });
 
   it("Should remove a pull request in the DB on PR closed", async () => {
-    const dbName = `database/${expect.getState().currentTestName}.db`;
-    fs.rmSync(dbName, { force: true });
     const dataSource = await initializeDataSource(dbName);
     const pr = new PullRequest();
     pr.url = htmlUrl;
@@ -104,7 +103,7 @@ describe("Action tests", () => {
           inputs: {
             eventName: "push",
             settings: JSON.stringify({
-              databaseUrl: `database/should_not_close_a_pr_that_is_not_past_the_threshold.db`,
+              databaseUrl: dbName,
             }),
             eventPayload: JSON.stringify({
               pull_request: {
