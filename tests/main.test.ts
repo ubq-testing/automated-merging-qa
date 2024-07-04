@@ -1,21 +1,26 @@
-import { db } from "./__mocks__/db";
+import * as fs from "node:fs";
+import { initializeDataSource } from "../src/adapters/sqlite/data-source";
+import { PullRequest } from "../src/adapters/sqlite/entities/pull-request";
 import { server } from "./__mocks__/node";
-import usersGet from "./__mocks__/users-get.json";
 import { expect, describe, beforeAll, beforeEach, afterAll, afterEach, it, jest } from "@jest/globals";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-describe("User tests", () => {
+const htmlUrl = "https://github.com/ubiquibot/automated-merging/pull/1";
+const actionsGithubPackage = "@actions/github";
+
+describe("Action tests", () => {
   beforeEach(() => {
-    for (const item of usersGet) {
-      db.users.create(item);
-    }
+    jest.resetAllMocks();
+    jest.resetModules();
   });
 
-  it("Should add and remove pull requests in the DB on PR opened / closed", async () => {
-    jest.mock("@actions/github", () => ({
+  it("Should add a pull request in the DB on PR opened", async () => {
+    const dbName = `database/${expect.getState().currentTestName}.db`;
+    fs.rmSync(dbName, { force: true });
+    jest.mock(actionsGithubPackage, () => ({
       context: {
         repo: {
           owner: {
@@ -24,13 +29,13 @@ describe("User tests", () => {
         },
         payload: {
           inputs: {
-            eventName: "push",
+            eventName: "pull_request.opened",
             settings: JSON.stringify({
-              databaseUrl: `database/${expect.getState().currentTestName}.db`,
+              databaseUrl: dbName,
             }),
             eventPayload: JSON.stringify({
               pull_request: {
-                html_url: "https://github.com/ubiquibot/automated-merging/pull/1",
+                html_url: htmlUrl,
               },
             }),
             env: {},
@@ -39,11 +44,56 @@ describe("User tests", () => {
       },
     }));
     const run = (await import("../src/action")).run;
-    await expect(run()).resolves.toReturn();
+    await expect(run()).resolves.toMatchObject({ status: 200 });
+    const dataSource = await initializeDataSource(dbName);
+    const pullRequests = await dataSource.getRepository(PullRequest).find();
+    expect(pullRequests).toMatchObject([
+      {
+        id: 1,
+        url: htmlUrl,
+      },
+    ]);
+  });
+
+  it("Should remove a pull request in the DB on PR closed", async () => {
+    const dbName = `database/${expect.getState().currentTestName}.db`;
+    fs.rmSync(dbName, { force: true });
+    const dataSource = await initializeDataSource(dbName);
+    const pr = new PullRequest();
+    pr.url = htmlUrl;
+    pr.lastActivity = new Date();
+    await pr.save();
+    jest.mock(actionsGithubPackage, () => ({
+      context: {
+        repo: {
+          owner: {
+            login: "ubiquibot",
+          },
+        },
+        payload: {
+          inputs: {
+            eventName: "pull_request.closed",
+            settings: JSON.stringify({
+              databaseUrl: dbName,
+            }),
+            eventPayload: JSON.stringify({
+              pull_request: {
+                html_url: htmlUrl,
+              },
+            }),
+            env: {},
+          },
+        },
+      },
+    }));
+    const run = (await import("../src/action")).run;
+    await expect(run()).resolves.toMatchObject({ status: 200 });
+    const pullRequests = await dataSource.getRepository(PullRequest).find();
+    expect(pullRequests).toHaveLength(0);
   });
 
   it("Should not close a PR that is not past the threshold", async () => {
-    jest.mock("@actions/github", () => ({
+    jest.mock(actionsGithubPackage, () => ({
       context: {
         repo: {
           owner: {
@@ -58,7 +108,7 @@ describe("User tests", () => {
             }),
             eventPayload: JSON.stringify({
               pull_request: {
-                html_url: "https://github.com/ubiquibot/automated-merging/pull/1",
+                html_url: htmlUrl,
               },
             }),
             env: {},

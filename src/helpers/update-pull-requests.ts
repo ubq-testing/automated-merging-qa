@@ -18,7 +18,6 @@ async function isPullMerged(context: Context, { repo, owner, issue_number: pullN
       owner,
       pull_number: pullNumber,
     });
-
     return true;
   } catch (e) {
     if (e instanceof RequestError) {
@@ -41,6 +40,11 @@ export async function updatePullRequests(context: Context) {
       context.logger.debug(`Processing pull-request ${pullRequest.url}...`);
       if (await isPullMerged(context, gitHubUrl)) {
         context.logger.info(`The pull request ${pullRequest.url} is already merged, nothing to do.`);
+        try {
+          await context.adapters.sqlite.pullRequest.delete(pullRequest.url);
+        } catch (e) {
+          context.logger.error(`Failed to delete pull-request ${pullRequest.url}: ${e}`);
+        }
         continue;
       }
       const activity = await getAllTimelineEvents(context, parseGitHubUrl(pullRequest.url));
