@@ -11,12 +11,18 @@ export async function run() {
   const payload = github.context.payload.inputs;
 
   const env = Value.Decode(envSchema, payload.env || {});
-  const settings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, JSON.parse(payload.settings)));
 
-  if (!pluginSettingsValidator.test(settings)) {
-    throw new Error("Invalid settings provided");
+  payload.settings = Value.Default(pluginSettingsSchema, JSON.parse(payload.settings));
+  if (!pluginSettingsValidator.test(payload.settings)) {
+    const errors: string[] = [];
+    for (const error of pluginSettingsValidator.errors(payload.settings)) {
+      console.error(error);
+      errors.push(`${error.path}: ${error.message}`);
+    }
+    throw new Error(`Invalid settings provided:\n${errors.join(";\n")}`);
   }
 
+  const settings = Value.Decode(pluginSettingsSchema, payload.settings);
   const inputs: PluginInputs = {
     stateId: payload.stateId,
     eventName: payload.eventName,

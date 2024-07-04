@@ -15,11 +15,11 @@ export const pluginSettingsSchema = T.Object({
   /**
    * The amount of validations needed to consider a pull-request by a collaborator to be deemed eligible for merge
    */
-  collaboratorMinimumApprovalsRequired: T.Number({ default: 0 }),
+  collaboratorMinimumApprovalsRequired: T.Number({ default: 1, minimum: 1 }),
   /**
    * The amount of validations needed to consider a pull-request by a contributor to be deemed eligible for merge
    */
-  contributorMinimumApprovalsRequired: T.Number({ default: 1 }),
+  contributorMinimumApprovalsRequired: T.Number({ default: 1, minimum: 1 }),
   /**
    * The timespan to wait before merging a collaborator's pull-request
    */
