@@ -53,9 +53,9 @@ export async function updatePullRequests(context: Context) {
 
       const lastActivityDate = new Date(Math.max(...eventDates.map((date) => date.getTime())));
 
-      if (isPastOffset(lastActivityDate, context.config.collaboratorMergeTimeout)) {
+      if (isNaN(lastActivityDate.getTime()) || isPastOffset(lastActivityDate, context.config.collaboratorMergeTimeout)) {
         context.logger.info(
-          `Pull-request ${pullRequest.url} is past its due date (${context.config.collaboratorMergeTimeout} after ${lastActivityDate.toISOString()}), will merge.`
+          `Pull-request ${pullRequest.url} is past its due date (${context.config.collaboratorMergeTimeout} after ${lastActivityDate}), will merge.`
         );
         await context.adapters.sqlite.pullRequest.delete(pullRequest.url);
         await context.octokit.pulls.merge({

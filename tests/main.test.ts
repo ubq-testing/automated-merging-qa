@@ -137,5 +137,50 @@ describe("Action tests", () => {
     expect(pullRequests).toHaveLength(1);
   });
 
-  it("Should close a PR that is past the threshold", async () => {});
+  it("Should close a PR that is past the threshold", async () => {
+    const dataSource = await initializeDataSource(dbName);
+    const pr = new PullRequest();
+    pr.url = htmlUrl;
+    const lastActivityDate = new Date();
+    lastActivityDate.setDate(new Date().getDate() - 8);
+    console.log(lastActivityDate);
+    pr.lastActivity = lastActivityDate;
+    await pr.save();
+    server.use(
+      http.get(
+        "https://api.github.com/repos/:org/:repo/pulls/:id/merge",
+        () => {
+          return HttpResponse.json({}, { status: 404 });
+        },
+        { once: true }
+      )
+    );
+    jest.mock(actionsGithubPackage, () => ({
+      context: {
+        repo: {
+          owner: {
+            login: "ubiquibot",
+          },
+        },
+        payload: {
+          inputs: {
+            eventName: "push",
+            settings: JSON.stringify({
+              databaseUrl: dbName,
+            }),
+            eventPayload: JSON.stringify({
+              pull_request: {
+                html_url: htmlUrl,
+              },
+            }),
+            env: {},
+          },
+        },
+      },
+    }));
+    const run = (await import("../src/action")).run;
+    await expect(run()).resolves.toMatchObject({ status: 200 });
+    const pullRequests = await dataSource.getRepository(PullRequest).find();
+    expect(pullRequests).toHaveLength(0);
+  });
 });
