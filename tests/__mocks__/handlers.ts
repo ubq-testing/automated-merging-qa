@@ -10,4 +10,7 @@ export const handlers = [
   http.get("https://api.github.com/repos/:org/:repo/pulls/:id/merge", () => {
     return HttpResponse.json();
   }),
+  http.get("https://api.github.com/repos/:org/:repo/issues/:id/timeline", () => {
+    return HttpResponse.json();
+  }),
 ];

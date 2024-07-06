@@ -1,4 +1,3 @@
-import { RequestError } from "@octokit/request-error";
 import ms from "ms";
 import { getAllTimelineEvents } from "../handlers/github-events";
 import { Context } from "../types";
@@ -13,16 +12,13 @@ type IssueEvent = {
 
 async function isPullMerged(context: Context, { repo, owner, issue_number: pullNumber }: IssueParams) {
   try {
-    await context.octokit.pulls.checkIfMerged({
+    const res = await context.octokit.pulls.checkIfMerged({
       repo,
       owner,
       pull_number: pullNumber,
     });
-    return true;
+    return res.status === 204;
   } catch (e) {
-    if (e instanceof RequestError) {
-      return e.status !== 204;
-    }
     return false;
   }
 }

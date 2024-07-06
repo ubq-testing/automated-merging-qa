@@ -1,3 +1,4 @@
+import { http, HttpResponse } from "msw";
 import * as fs from "node:fs";
 import { initializeDataSource } from "../src/adapters/sqlite/data-source";
 import { PullRequest } from "../src/adapters/sqlite/entities/pull-request";
@@ -12,11 +13,12 @@ const htmlUrl = "https://github.com/ubiquibot/automated-merging/pull/1";
 const actionsGithubPackage = "@actions/github";
 
 describe("Action tests", () => {
-  const dbName = `database/tests/${expect.getState().currentTestName}.db`;
+  let dbName = `database/tests/test.db`;
 
   beforeEach(() => {
     jest.resetAllMocks();
     jest.resetModules();
+    dbName = `database/tests/${expect.getState().currentTestName}.db`;
     fs.rmSync(dbName, { force: true });
   });
 
@@ -92,6 +94,20 @@ describe("Action tests", () => {
   });
 
   it("Should not close a PR that is not past the threshold", async () => {
+    const dataSource = await initializeDataSource(dbName);
+    const pr = new PullRequest();
+    pr.url = htmlUrl;
+    pr.lastActivity = new Date();
+    await pr.save();
+    server.use(
+      http.get(
+        "https://api.github.com/repos/:org/:repo/pulls/:id/merge",
+        () => {
+          return HttpResponse.json({}, { status: 404 });
+        },
+        { once: true }
+      )
+    );
     jest.mock(actionsGithubPackage, () => ({
       context: {
         repo: {
@@ -116,7 +132,9 @@ describe("Action tests", () => {
       },
     }));
     const run = (await import("../src/action")).run;
-    await expect(run()).resolves.toReturn();
+    await expect(run()).resolves.toMatchObject({ status: 200 });
+    const pullRequests = await dataSource.getRepository(PullRequest).find();
+    expect(pullRequests).toHaveLength(1);
   });
 
   it("Should close a PR that is past the threshold", async () => {});
