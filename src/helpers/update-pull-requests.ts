@@ -61,7 +61,7 @@ export async function updatePullRequests(context: Context) {
             context.logger.info(`Pull-request ${pullRequest.url} is past its due date (${requirements.mergeTimeout} after ${lastActivityDate}), will merge.`);
             await mergePullRequest(context, pullRequest, gitHubUrl);
           } else {
-            context.logger.info(`Pull-request ${pullRequest.url} does not pass all CI tests, won't merge.`);
+            context.logger.info(`Pull-request ${pullRequest.url} (sha: ${pullRequestDetails.head.sha}) does not pass all CI tests, won't merge.`);
           }
         } else {
           context.logger.info(`Pull-request ${pullRequest.url} does not have sufficient reviewer approvals to be merged.`);
