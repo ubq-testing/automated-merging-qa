@@ -72,7 +72,7 @@ export async function isCiGreen({ octokit, logger }: Context, sha: string, { own
         for (const checkResult of checkResults) {
           if (checkResult.find((o) => o.status !== "completed")) {
             return null;
-          } else if (checkResult.find((o) => o.conclusion !== "success" && o.conclusion !== "skipped")) {
+          } else if (checkResult.find((o) => o.conclusion === "failure")) {
             return false;
           }
         }
