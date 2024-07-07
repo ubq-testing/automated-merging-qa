@@ -1,4 +1,4 @@
-name: "the name of the plugin"
+name: "Automated Merging"
 
 on:
   workflow_dispatch:
@@ -16,29 +16,47 @@ on:
       ref:
         description: "Ref"
 
+# Limits to one job at a time
+#concurrency:
+#  group: ${{ github.workflow }}
+
+
 jobs:
   compute:
-    name: "plugin name"
+    name: "Automated Merging"
     runs-on: ubuntu-latest
     permissions: write-all
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: setup node
+      - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: "20.10.0"
 
-      - name: install dependencies
-        run: yarn
+      - name: Install dependencies
+        run: yarn install --immutable --immutable-cache --check-cache
 
-      - name: execute directive
+      - run: ${{ toJSON(inputs) }}
+        shell: cat {0}
+
+      - name: Execute directive
         run: npx tsx ./src/main.ts
-        id: plugin-name
+        id: automated-merging
+
+      - name: Commit and Push DB updates
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --global pull.rebase false
+          git add database/sql.db
+          if [ -n "$(git diff-index --cached --name-only HEAD)" ]; then
+            git commit -m "chore: [skip ci] updated database" || echo "Lint-staged check failed"
+            git pull -X ours
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
