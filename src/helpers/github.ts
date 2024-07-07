@@ -27,7 +27,7 @@ export async function getMergeTimeoutAndApprovalRequiredCount(context: Context, 
     mergeTimeout: context.config.contributorMergeTimeout,
     requiredApprovalCount: context.config.contributorMinimumApprovalsRequired,
   };
-  return authorAssociation === "COLLABORATOR" ? timeoutCollaborator : timeoutContributor;
+  return authorAssociation === "COLLABORATOR" || authorAssociation === "MEMBER" ? timeoutCollaborator : timeoutContributor;
 }
 
 export async function getApprovalCount({ octokit, logger }: Context, { owner, repo, issue_number: pullNumber }: IssueParams) {
