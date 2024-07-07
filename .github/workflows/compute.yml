@@ -47,6 +47,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --global pull.rebase false
           git add database/sql.db
           if [ -n "$(git diff-index --cached --name-only HEAD)" ]; then
             git commit -m "chore: [skip ci] updated database" || echo "Lint-staged check failed"
