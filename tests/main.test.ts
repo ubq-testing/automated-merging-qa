@@ -1,12 +1,15 @@
+import { drop } from "@mswjs/data";
 import { Octokit } from "@octokit/rest";
 import { http, HttpResponse } from "msw";
 import * as fs from "node:fs";
 import { initializeDataSource } from "../src/adapters/sqlite/data-source";
 import { PullRequest } from "../src/adapters/sqlite/entities/pull-request";
-import { getMergeTimeoutAndApprovalRequiredCount } from "../src/helpers/github";
+import { getMergeTimeoutAndApprovalRequiredCount, isCiGreen } from "../src/helpers/github";
+import { db } from "./__mocks__/db";
 import { server } from "./__mocks__/node";
 import { expect, describe, beforeAll, beforeEach, afterAll, afterEach, it, jest } from "@jest/globals";
 import { Context } from "../src/types";
+import seed from "./__mocks__/seed.json";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -14,6 +17,7 @@ afterAll(() => server.close());
 
 const htmlUrl = "https://github.com/ubiquibot/automated-merging/pull/1";
 const actionsGithubPackage = "@actions/github";
+const issueParams = { owner: "ubiquibot", repo: "automated-merging", issue_number: 1 };
 
 describe("Action tests", () => {
   let dbName = `database/tests/test.db`;
@@ -23,6 +27,13 @@ describe("Action tests", () => {
     jest.resetModules();
     dbName = `database/tests/${expect.getState().currentTestName}.db`;
     fs.rmSync(dbName, { force: true });
+    drop(db);
+    for (const table of Object.keys(seed)) {
+      const tableName = table as keyof typeof seed;
+      for (const row of seed[tableName]) {
+        db[tableName].create(row);
+      }
+    }
   });
 
   it("Should add a pull request in the DB on PR opened", async () => {
@@ -67,6 +78,15 @@ describe("Action tests", () => {
     pr.url = htmlUrl;
     pr.lastActivity = new Date();
     await pr.save();
+    server.use(
+      http.get(
+        "https://api.github.com/repos/:org/:repo/pulls/:id/reviews",
+        () => {
+          return HttpResponse.json([{ state: "APPROVED" }, { state: "APPROVED" }]);
+        },
+        { once: true }
+      )
+    );
     jest.mock(actionsGithubPackage, () => ({
       context: {
         repo: {
@@ -146,7 +166,6 @@ describe("Action tests", () => {
     pr.url = htmlUrl;
     const lastActivityDate = new Date();
     lastActivityDate.setDate(new Date().getDate() - 8);
-    console.log(lastActivityDate);
     pr.lastActivity = lastActivityDate;
     await pr.save();
     server.use(
@@ -209,7 +228,7 @@ describe("Action tests", () => {
       },
       octokit: new Octokit(),
     } as unknown as Context;
-    await expect(getMergeTimeoutAndApprovalRequiredCount(context, { owner: "ubiquibot", repo: "automated-merging", issue_number: 1 })).resolves.toEqual({
+    await expect(getMergeTimeoutAndApprovalRequiredCount(context, issueParams)).resolves.toEqual({
       mergeTimeout: collaboratorMergeTimeout,
       requiredApprovalCount: collaboratorMinimumApprovalsRequired,
     });
@@ -222,9 +241,43 @@ describe("Action tests", () => {
         { once: true }
       )
     );
-    await expect(getMergeTimeoutAndApprovalRequiredCount(context, { owner: "ubiquibot", repo: "automated-merging", issue_number: 1 })).resolves.toEqual({
+    await expect(getMergeTimeoutAndApprovalRequiredCount(context, issueParams)).resolves.toEqual({
       mergeTimeout: contributorMergeTimeout,
       requiredApprovalCount: contributorMinimumApprovalsRequired,
     });
+  });
+
+  it("Should check if the CI tests are all passing", async () => {
+    server.use(
+      http.get(
+        "https://api.github.com/repos/:org/:repo/commits/:id/check-suites",
+        () => {
+          return HttpResponse.json({ check_suites: [{ id: 1 }] });
+        },
+        { once: true }
+      )
+    );
+    server.use(
+      http.get(
+        "https://api.github.com/repos/:org/:repo/check-suites/:id/check-runs",
+        () => {
+          return HttpResponse.json({ check_runs: [{ id: 1, conclusion: "success" }] });
+        },
+        { once: true }
+      )
+    );
+    const context = {
+      logger: {
+        debug: console.log,
+      },
+      payload: {
+        pull_request: {
+          assignees: [{ login: "ubiquibot" }],
+        },
+      },
+      config: {},
+      octokit: new Octokit(),
+    } as unknown as Context;
+    await expect(isCiGreen(context, "1", issueParams)).resolves.toEqual(true);
   });
 });

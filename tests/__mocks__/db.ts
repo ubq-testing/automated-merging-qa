@@ -9,4 +9,14 @@ export const db = factory({
     id: primaryKey(Number),
     name: String,
   },
+  pullRequests: {
+    id: primaryKey(Number),
+    head: {
+      sha: String,
+    },
+  },
+  ci: {
+    id: primaryKey(Number),
+    conclusion: String,
+  },
 });

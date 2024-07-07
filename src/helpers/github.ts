@@ -46,8 +46,37 @@ export async function getApprovalCount({ octokit, logger }: Context, { owner, re
       pull_number: pullNumber,
     });
     return reviews.filter((review) => review.state === "APPROVED").length;
-  } catch (error) {
-    logger.error(`Error fetching reviews: ${error}`);
+  } catch (e) {
+    logger.error(`Error fetching reviews' approvals: ${e}`);
     return 0;
+  }
+}
+
+export async function isCiGreen({ octokit, logger }: Context, sha: string, { owner, repo }: IssueParams) {
+  try {
+    const ref = sha;
+
+    const { data: checkSuites } = await octokit.checks.listSuitesForRef({
+      owner,
+      repo,
+      ref,
+    });
+
+    const checkSuitePromises = checkSuites.check_suites.map(async (suite) => {
+      const { data: checkRuns } = await octokit.checks.listForSuite({
+        owner,
+        repo,
+        check_suite_id: suite.id,
+      });
+
+      return checkRuns.check_runs.every((run) => run.conclusion === "success");
+    });
+
+    const checkResults = await Promise.all(checkSuitePromises);
+
+    return checkResults.every((result) => result);
+  } catch (e) {
+    logger.error(`Error checking CI status: ${e}`);
+    return false;
   }
 }

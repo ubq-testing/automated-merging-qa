@@ -1,0 +1,16 @@
+{
+  "pullRequests": [
+    {
+      "id": 1,
+      "head": {
+        "sha": "1"
+      }
+    }
+  ],
+  "ci": [
+    {
+      "id": 1,
+      "conclusion": "success"
+    }
+  ]
+}

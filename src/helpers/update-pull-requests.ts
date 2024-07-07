@@ -2,7 +2,7 @@ import ms from "ms";
 import { PullRequest } from "../adapters/sqlite/entities/pull-request";
 import { getAllTimelineEvents } from "../handlers/github-events";
 import { Context } from "../types";
-import { getApprovalCount, getMergeTimeoutAndApprovalRequiredCount, IssueParams, parseGitHubUrl } from "./github";
+import { getApprovalCount, getMergeTimeoutAndApprovalRequiredCount, isCiGreen, IssueParams, parseGitHubUrl } from "./github";
 
 type IssueEvent = {
   created_at?: string;
@@ -11,17 +11,14 @@ type IssueEvent = {
   commented_at?: string;
 };
 
-async function isPullMerged(context: Context, { repo, owner, issue_number: pullNumber }: IssueParams) {
-  try {
-    const res = await context.octokit.pulls.checkIfMerged({
+async function getPullRequestDetails(context: Context, { repo, owner, issue_number: pullNumber }: IssueParams) {
+  return (
+    await context.octokit.pulls.get({
       repo,
       owner,
       pull_number: pullNumber,
-    });
-    return res.status === 204;
-  } catch (e) {
-    return false;
-  }
+    })
+  ).data;
 }
 
 export async function updatePullRequests(context: Context) {
@@ -33,8 +30,9 @@ export async function updatePullRequests(context: Context) {
   for (const pullRequest of pullRequests) {
     try {
       const gitHubUrl = parseGitHubUrl(pullRequest.url);
+      const pullRequestDetails = await getPullRequestDetails(context, gitHubUrl);
       context.logger.debug(`Processing pull-request ${pullRequest.url}...`);
-      if (await isPullMerged(context, gitHubUrl)) {
+      if (pullRequestDetails.merged) {
         context.logger.info(`The pull request ${pullRequest.url} is already merged, nothing to do.`);
         try {
           await context.adapters.sqlite.pullRequest.delete(pullRequest.url);
@@ -56,8 +54,12 @@ export async function updatePullRequests(context: Context) {
       const requirements = await getMergeTimeoutAndApprovalRequiredCount(context, gitHubUrl);
       if (isNaN(lastActivityDate.getTime()) || isPastOffset(lastActivityDate, requirements.mergeTimeout)) {
         if ((await getApprovalCount(context, gitHubUrl)) > 0) {
-          context.logger.info(`Pull-request ${pullRequest.url} is past its due date (${requirements} after ${lastActivityDate}), will merge.`);
-          await mergePullRequest(context, pullRequest, gitHubUrl);
+          if (await isCiGreen(context, pullRequestDetails.head.sha, gitHubUrl)) {
+            context.logger.info(`Pull-request ${pullRequest.url} is past its due date (${requirements} after ${lastActivityDate}), will merge.`);
+            await mergePullRequest(context, pullRequest, gitHubUrl);
+          } else {
+            context.logger.info(`Pull-request ${pullRequest.url} does not pass all CI tests, won't merge.`);
+          }
         } else {
           context.logger.info(`Pull-request ${pullRequest.url} does not have sufficient reviewer approvals to be merged.`);
         }
