@@ -86,9 +86,8 @@ export async function isCiGreen({ octokit, logger, env }: Context, sha: string, 
         until(lastResult) {
           if (lastResult === null) {
             logger.info("Not all CI runs were complete, will retry...");
-            return false;
           }
-          return lastResult;
+          return lastResult !== null;
         },
         maxTry: 100,
         delay: 60000,
