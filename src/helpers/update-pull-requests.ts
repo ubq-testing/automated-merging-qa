@@ -32,8 +32,8 @@ export async function updatePullRequests(context: Context) {
       const gitHubUrl = parseGitHubUrl(pullRequest.url);
       const pullRequestDetails = await getPullRequestDetails(context, gitHubUrl);
       context.logger.debug(`Processing pull-request ${pullRequest.url}...`);
-      if (pullRequestDetails.merged) {
-        context.logger.info(`The pull request ${pullRequest.url} is already merged, nothing to do.`);
+      if (pullRequestDetails.merged || pullRequestDetails.closed_at) {
+        context.logger.info(`The pull request ${pullRequest.url} is already merged or closed, nothing to do.`);
         try {
           await context.adapters.sqlite.pullRequest.delete(pullRequest.url);
         } catch (e) {
