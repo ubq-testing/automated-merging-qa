@@ -1,7 +1,8 @@
 import ms from "ms";
+import { PullRequest } from "../adapters/sqlite/entities/pull-request";
 import { getAllTimelineEvents } from "../handlers/github-events";
 import { Context } from "../types";
-import { IssueParams, parseGitHubUrl } from "./github-url";
+import { getMergeTimeout, IssueParams, parseGitHubUrl } from "./github";
 
 type IssueEvent = {
   created_at?: string;
@@ -32,7 +33,6 @@ export async function updatePullRequests(context: Context) {
   for (const pullRequest of pullRequests) {
     try {
       const gitHubUrl = parseGitHubUrl(pullRequest.url);
-      const { repo, owner, issue_number } = gitHubUrl;
       context.logger.debug(`Processing pull-request ${pullRequest.url}...`);
       if (await isPullMerged(context, gitHubUrl)) {
         context.logger.info(`The pull request ${pullRequest.url} is already merged, nothing to do.`);
@@ -53,16 +53,10 @@ export async function updatePullRequests(context: Context) {
 
       const lastActivityDate = new Date(Math.max(...eventDates.map((date) => date.getTime())));
 
-      if (isNaN(lastActivityDate.getTime()) || isPastOffset(lastActivityDate, context.config.collaboratorMergeTimeout)) {
-        context.logger.info(
-          `Pull-request ${pullRequest.url} is past its due date (${context.config.collaboratorMergeTimeout} after ${lastActivityDate}), will merge.`
-        );
-        await context.adapters.sqlite.pullRequest.delete(pullRequest.url);
-        await context.octokit.pulls.merge({
-          owner,
-          repo,
-          pull_number: issue_number,
-        });
+      const mergeTimeout = await getMergeTimeout(context, gitHubUrl);
+      if (isNaN(lastActivityDate.getTime()) || isPastOffset(lastActivityDate, mergeTimeout)) {
+        context.logger.info(`Pull-request ${pullRequest.url} is past its due date (${mergeTimeout} after ${lastActivityDate}), will merge.`);
+        await mergePullRequest(context, pullRequest, gitHubUrl);
       } else {
         await context.adapters.sqlite.pullRequest.update(pullRequest.url, lastActivityDate);
         context.logger.info(`Updated PR ${pullRequest.url} to a new timestamp (${lastActivityDate})`);
@@ -73,7 +67,15 @@ export async function updatePullRequests(context: Context) {
   }
 }
 
-// Function to check if the last activity date is past a given offset
+async function mergePullRequest(context: Context, pullRequest: PullRequest, { repo, owner, issue_number: pullNumber }: IssueParams) {
+  await context.adapters.sqlite.pullRequest.delete(pullRequest.url);
+  await context.octokit.pulls.merge({
+    owner,
+    repo,
+    pull_number: pullNumber,
+  });
+}
+
 function isPastOffset(lastActivityDate: Date, offset: string): boolean {
   const currentDate = new Date();
   const offsetTime = ms(offset);

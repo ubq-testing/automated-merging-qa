@@ -1,9 +1,12 @@
+import { Octokit } from "@octokit/rest";
 import { http, HttpResponse } from "msw";
 import * as fs from "node:fs";
 import { initializeDataSource } from "../src/adapters/sqlite/data-source";
 import { PullRequest } from "../src/adapters/sqlite/entities/pull-request";
+import { getMergeTimeout } from "../src/helpers/github";
 import { server } from "./__mocks__/node";
 import { expect, describe, beforeAll, beforeEach, afterAll, afterEach, it, jest } from "@jest/globals";
+import { Context } from "../src/types";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
@@ -182,5 +185,36 @@ describe("Action tests", () => {
     await expect(run()).resolves.toMatchObject({ status: 200 });
     const pullRequests = await dataSource.getRepository(PullRequest).find();
     expect(pullRequests).toHaveLength(0);
+  });
+
+  it("Should pick the timeout according to the assignee's status", async () => {
+    const contributorMergeTimeout = "7 days";
+    const collaboratorMergeTimeout = "3.5 days";
+    const context = {
+      logger: {
+        debug: console.log,
+      },
+      payload: {
+        pull_request: {
+          assignees: [{ login: "ubiquibot" }],
+        },
+      },
+      config: {
+        contributorMergeTimeout,
+        collaboratorMergeTimeout,
+      },
+      octokit: new Octokit(),
+    } as unknown as Context;
+    await expect(getMergeTimeout(context, { owner: "ubiquibot", repo: "automated-merging", issue_number: 1 })).resolves.toEqual(collaboratorMergeTimeout);
+    server.use(
+      http.get(
+        "https://api.github.com/repos/:org/:repo/collaborators/:login",
+        () => {
+          return HttpResponse.json("Not a collaborator", { status: 404 });
+        },
+        { once: true }
+      )
+    );
+    await expect(getMergeTimeout(context, { owner: "ubiquibot", repo: "automated-merging", issue_number: 1 })).resolves.toEqual(contributorMergeTimeout);
   });
 });

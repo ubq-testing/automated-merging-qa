@@ -1,4 +1,4 @@
-import { IssueParams } from "../helpers/github-url";
+import { IssueParams } from "../helpers/github";
 import { Context } from "../types";
 
 export async function getAllTimelineEvents({ octokit }: Context, issueParams: IssueParams) {

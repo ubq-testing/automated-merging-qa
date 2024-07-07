@@ -16,4 +16,7 @@ export const handlers = [
   http.put("https://api.github.com/repos/:org/:repo/pulls/:id/merge", () => {
     return HttpResponse.json();
   }),
+  http.get("https://api.github.com/repos/:org/:repo/collaborators/:login", () => {
+    return HttpResponse.json();
+  }),
 ];
