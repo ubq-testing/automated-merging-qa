@@ -18,6 +18,7 @@ afterAll(() => server.close());
 const htmlUrl = "https://github.com/ubiquibot/automated-merging/pull/1";
 const actionsGithubPackage = "@actions/github";
 const issueParams = { owner: "ubiquibot", repo: "automated-merging", issue_number: 1 };
+const workflow = "workflow";
 
 describe("Action tests", () => {
   let dbName = `database/tests/test.db`;
@@ -44,6 +45,7 @@ describe("Action tests", () => {
             login: "ubiquibot",
           },
         },
+        workflow,
         payload: {
           inputs: {
             eventName: "pull_request.opened",
@@ -55,7 +57,9 @@ describe("Action tests", () => {
                 html_url: htmlUrl,
               },
             }),
-            env: {},
+            env: {
+              workflowName: workflow,
+            },
           },
         },
       },
@@ -94,6 +98,7 @@ describe("Action tests", () => {
             login: "ubiquibot",
           },
         },
+        workflow,
         payload: {
           inputs: {
             eventName: "pull_request.closed",
@@ -105,7 +110,9 @@ describe("Action tests", () => {
                 html_url: htmlUrl,
               },
             }),
-            env: {},
+            env: {
+              workflowName: workflow,
+            },
           },
         },
       },
@@ -145,6 +152,7 @@ describe("Action tests", () => {
             login: "ubiquibot",
           },
         },
+        workflow,
         payload: {
           inputs: {
             eventName: "push",
@@ -156,7 +164,9 @@ describe("Action tests", () => {
                 html_url: htmlUrl,
               },
             }),
-            env: {},
+            env: {
+              workflowName: workflow,
+            },
           },
         },
       },
@@ -191,6 +201,7 @@ describe("Action tests", () => {
             login: "ubiquibot",
           },
         },
+        workflow,
         payload: {
           inputs: {
             eventName: "push",
@@ -202,7 +213,9 @@ describe("Action tests", () => {
                 html_url: htmlUrl,
               },
             }),
-            env: {},
+            env: {
+              workflowName: workflow,
+            },
           },
         },
       },
@@ -282,8 +295,12 @@ describe("Action tests", () => {
           assignees: [{ login: "ubiquibot" }],
         },
       },
+      workflow: "other workflow",
       config: {},
       octokit: new Octokit(),
+      env: {
+        workflowName: workflow,
+      },
     } as unknown as Context;
     await expect(isCiGreen(context, "1", issueParams)).resolves.toEqual(true);
   });
