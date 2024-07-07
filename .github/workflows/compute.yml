@@ -16,8 +16,10 @@ on:
       ref:
         description: "Ref"
 
-concurrency:
-  group: ${{ github.workflow }}
+# Limits to one job at a time
+#concurrency:
+#  group: ${{ github.workflow }}
+
 
 jobs:
   compute:
