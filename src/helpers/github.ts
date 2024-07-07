@@ -69,12 +69,13 @@ export async function isCiGreen({ octokit, logger, env }: Context, sha: string, 
         const checkResults = await Promise.all(checkSuitePromises);
 
         for (const checkResult of checkResults) {
-          if (checkResult.find((o) => o.status !== "completed")) {
+          const filteredResults = checkResult.filter((o) => o.name !== env.workflowName);
+          if (filteredResults.find((o) => o.status !== "completed")) {
             return null;
           } else if (
-            checkResult.find((o) => {
+            filteredResults.find((o) => {
               logger.debug(`Workflow ${o.name}/${o.id}[${o.url}]: ${o.status},${o.conclusion}`);
-              return o.conclusion === "failure" && o.name !== env.workflowName;
+              return o.conclusion === "failure";
             })
           ) {
             return false;
