@@ -45,18 +45,51 @@ jobs:
         run: npx tsx ./src/main.ts
         id: automated-merging
 
-      - name: Commit and Push DB updates
+      # Will try to upload the changes made within the DB during the run.
+      # If all tries fail, an artifact containing the db is uploaded.
+      - name: Commit and Push DB updates with Retry
+        id: commit_and_push
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git config --global pull.rebase false
           git add database/sql.db
-          if [ -n "$(git diff-index --cached --name-only HEAD)" ]; then
-            git commit -m "chore: [skip ci] updated database" || echo "Lint-staged check failed"
-            git pull -X ours
-            git push origin main
-          else
-            echo "No changes to commit"
+
+          attempts=0
+          max_attempts=10
+          success=false
+
+          while [ $attempts -lt $max_attempts ]; do
+            if [ -n "$(git diff-index --cached --name-only HEAD)" ]; then
+              if git commit -m "chore: [skip ci] updated database"; then
+                git pull -X ours
+                if git push origin main; then
+                  success=true
+                  break
+                fi
+              else
+                echo "Commit failed, retrying..."
+              fi
+            else
+              echo "No changes to commit"
+              success=true
+              break
+            fi
+            attempts=$((attempts + 1))
+            echo "Attempt $attempts/$max_attempts failed, retrying in 10 seconds..."
+            sleep 10
+          done
+
+          if [ "$success" = false ]; then
+            echo "Failed to commit and push changes after $max_attempts attempts" | tee failure.log
+            exit 1
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Failure Log
+        if: steps.commit_and_push.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+           name: sql.db
+           path: database/sql.db
