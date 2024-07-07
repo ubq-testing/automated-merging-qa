@@ -14,6 +14,7 @@ describe("User tests", () => {
             login: "ubiquibot",
           },
         },
+        workflow: "workflow",
         payload: {
           inputs: {
             eventName: "pull_request.opened",
@@ -26,7 +27,9 @@ describe("User tests", () => {
                 html_url: "https://github.com/ubiquibot/automated-merging/pull/1",
               },
             }),
-            env: {},
+            env: {
+              workflowName: "workflow",
+            },
           },
         },
       },
