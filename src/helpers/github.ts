@@ -61,6 +61,7 @@ export async function isCiGreen({ octokit, logger }: Context, sha: string, { own
         check_suite_id: suite.id,
       });
 
+      logger.debug(`Workflow runs for sha ${sha}: ${JSON.stringify(checkRuns.check_runs)}`);
       return checkRuns.check_runs.every((run) => run.conclusion === "success");
     });
 
