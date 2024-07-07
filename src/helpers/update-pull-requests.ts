@@ -55,7 +55,7 @@ export async function updatePullRequests(context: Context) {
       if (isNaN(lastActivityDate.getTime()) || isPastOffset(lastActivityDate, requirements.mergeTimeout)) {
         if ((await getApprovalCount(context, gitHubUrl)) > 0) {
           if (await isCiGreen(context, pullRequestDetails.head.sha, gitHubUrl)) {
-            context.logger.info(`Pull-request ${pullRequest.url} is past its due date (${requirements} after ${lastActivityDate}), will merge.`);
+            context.logger.info(`Pull-request ${pullRequest.url} is past its due date (${requirements.mergeTimeout} after ${lastActivityDate}), will merge.`);
             await mergePullRequest(context, pullRequest, gitHubUrl);
           } else {
             context.logger.info(`Pull-request ${pullRequest.url} does not pass all CI tests, won't merge.`);

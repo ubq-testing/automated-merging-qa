@@ -12,7 +12,7 @@ export const handlers = [
     return HttpResponse.json();
   }),
   http.get("https://api.github.com/repos/:org/:repo/pulls/:id/reviews", () => {
-    return HttpResponse.json([]);
+    return HttpResponse.json(db.reviews.getAll());
   }),
   http.get("https://api.github.com/repos/:org/:repo/issues/:id/timeline", () => {
     return HttpResponse.json();

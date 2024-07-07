@@ -19,4 +19,8 @@ export const db = factory({
     id: primaryKey(Number),
     conclusion: String,
   },
+  reviews: {
+    id: primaryKey(Number),
+    state: String,
+  },
 });

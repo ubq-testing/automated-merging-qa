@@ -12,5 +12,15 @@
       "id": 1,
       "conclusion": "success"
     }
+  ],
+  "reviews": [
+    {
+      "id": 1,
+      "state": "APPROVED"
+    },
+    {
+      "id": 2,
+      "state": "APPROVED"
+    }
   ]
 }
