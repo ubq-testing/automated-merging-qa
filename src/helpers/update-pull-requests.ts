@@ -52,6 +52,9 @@ export async function updatePullRequests(context: Context) {
       const lastActivityDate = new Date(Math.max(...eventDates.map((date) => date.getTime())));
 
       const requirements = await getMergeTimeoutAndApprovalRequiredCount(context, pullRequestDetails.author_association);
+      context.logger.debug(
+        `Requirements according to association ${pullRequestDetails.author_association}: ${JSON.stringify(requirements)} with last activity date: ${lastActivityDate}`
+      );
       if (isNaN(lastActivityDate.getTime()) || isPastOffset(lastActivityDate, requirements.mergeTimeout)) {
         if ((await getApprovalCount(context, gitHubUrl)) > 0) {
           if (await isCiGreen(context, pullRequestDetails.head.sha, gitHubUrl)) {
