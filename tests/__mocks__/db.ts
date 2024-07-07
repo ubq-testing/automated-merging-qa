@@ -14,10 +14,12 @@ export const db = factory({
     head: {
       sha: String,
     },
+    author_association: String,
   },
   ci: {
     id: primaryKey(Number),
     conclusion: String,
+    status: String,
   },
   reviews: {
     id: primaryKey(Number),

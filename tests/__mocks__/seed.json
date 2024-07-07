@@ -4,13 +4,15 @@
       "id": 1,
       "head": {
         "sha": "1"
-      }
+      },
+      "author_association": "MEMBER"
     }
   ],
   "ci": [
     {
       "id": 1,
-      "conclusion": "success"
+      "conclusion": "success",
+      "status": "completed"
     }
   ],
   "reviews": [
