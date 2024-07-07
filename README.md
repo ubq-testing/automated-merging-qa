@@ -10,7 +10,7 @@ on the association of the pull-request author.
   name: automated-merging
   id: automated-merging
   description: "Automatically merge pull-requests"
-  with: # these are the example settings, the kernel passes these to the plugin.
+  with:
     collaboratorMinimumApprovalsRequired: 1
     contributorMinimumApprovalsRequired: 2
     collaboratorMergeTimeout: "3.5 days"
