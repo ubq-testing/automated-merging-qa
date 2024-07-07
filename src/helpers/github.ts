@@ -62,7 +62,7 @@ export async function isCiGreen({ octokit, logger }: Context, sha: string, { own
       });
 
       logger.debug(`Workflow runs for sha ${sha}: ${JSON.stringify(checkRuns.check_runs)}`);
-      return checkRuns.check_runs.every((run) => run.conclusion === "success");
+      return checkRuns.check_runs.every((run) => run.conclusion === "success" || run.conclusion === "skipped");
     });
 
     const checkResults = await Promise.all(checkSuitePromises);
