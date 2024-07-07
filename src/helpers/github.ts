@@ -1,3 +1,4 @@
+import { retryAsync } from "ts-retry";
 import { Context } from "../types";
 
 export function parseGitHubUrl(url: string) {
@@ -68,6 +69,58 @@ export async function isCiGreen({ octokit, logger }: Context, sha: string, { own
     const checkResults = await Promise.all(checkSuitePromises);
 
     return checkResults.every((result) => result);
+  } catch (e) {
+    logger.error(`Error checking CI status: ${e}`);
+    return false;
+  }
+}
+
+export async function isCiGreen2({ octokit, logger }: Context, sha: string, { owner, repo }: IssueParams) {
+  try {
+    const ref = sha;
+
+    const { data: checkSuites } = await octokit.checks.listSuitesForRef({
+      owner,
+      repo,
+      ref,
+    });
+
+    const checkSuitePromises = checkSuites.check_suites.map(async (suite) => {
+      const { data: checkRuns } = await octokit.checks.listForSuite({
+        owner,
+        repo,
+        check_suite_id: suite.id,
+      });
+
+      // logger.debug(`Workflow runs for sha ${sha}: ${JSON.stringify(checkRuns.check_runs)}`);
+      // return checkRuns.check_runs.every((run) => run.conclusion === "success" || run.conclusion === "skipped");
+      return checkRuns.check_runs;
+    });
+
+    return retryAsync(
+      async () => {
+        const checkResults = await Promise.all(checkSuitePromises);
+
+        for (const checkResult of checkResults) {
+          if (checkResult.find((o) => o.status !== "completed")) {
+            return null;
+          } else if (checkResult.find((o) => o.conclusion !== "success" && o.conclusion !== "skipped")) {
+            return false;
+          }
+        }
+        return true;
+      },
+      {
+        until(lastResult) {
+          if (lastResult === null) {
+            logger.info("Not all CI runs were complete, will retry...");
+          }
+          return lastResult === null;
+        },
+        maxTry: 100,
+        delay: 60000,
+      }
+    );
   } catch (e) {
     logger.error(`Error checking CI status: ${e}`);
     return false;
