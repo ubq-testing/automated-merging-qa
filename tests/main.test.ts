@@ -268,7 +268,7 @@ describe("Action tests", () => {
       http.get(
         "https://api.github.com/repos/:org/:repo/check-suites/:id/check-runs",
         () => {
-          return HttpResponse.json({ check_runs: [{ id: 1, conclusion: "success" }] });
+          return HttpResponse.json({ check_runs: [{ id: 1, conclusion: "success", status: "completed" }] });
         },
         { once: true }
       )
