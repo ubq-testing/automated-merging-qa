@@ -10,6 +10,7 @@ import { envSchema, PluginInputs, pluginSettingsSchema, pluginSettingsValidator 
 export async function run() {
   const payload = github.context.payload.inputs;
 
+  payload.env = { ...(payload.env || {}), workflowName: github.context.workflow };
   const env = Value.Decode(envSchema, payload.env || {});
 
   payload.settings = Value.Default(pluginSettingsSchema, JSON.parse(payload.settings));

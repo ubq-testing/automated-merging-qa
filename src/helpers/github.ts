@@ -45,7 +45,7 @@ export async function getApprovalCount({ octokit, logger }: Context, { owner, re
   }
 }
 
-export async function isCiGreen({ octokit, logger }: Context, sha: string, { owner, repo }: IssueParams) {
+export async function isCiGreen({ octokit, logger, env }: Context, sha: string, { owner, repo }: IssueParams) {
   try {
     const ref = sha;
 
@@ -54,11 +54,10 @@ export async function isCiGreen({ octokit, logger }: Context, sha: string, { own
       repo,
       ref,
     });
-
     return retryAsync(
       async () => {
         const checkSuitePromises = checkSuites.check_suites.map(async (suite) => {
-          logger.debug(`Checking runs for suite ${suite.id}: ${suite.url}`);
+          logger.debug(`Checking runs for suite ${suite.id}: ${suite.url}, and filter out ${env.workflowName}`);
           const { data: checkRuns } = await octokit.checks.listForSuite({
             owner,
             repo,
@@ -72,7 +71,12 @@ export async function isCiGreen({ octokit, logger }: Context, sha: string, { own
         for (const checkResult of checkResults) {
           if (checkResult.find((o) => o.status !== "completed")) {
             return null;
-          } else if (checkResult.find((o) => o.conclusion === "failure")) {
+          } else if (
+            checkResult.find((o) => {
+              logger.debug(`Workflow ${o.name}/${o.id}[${o.url}]: ${o.status},${o.conclusion}`);
+              return o.conclusion === "failure" && o.name !== env.workflowName;
+            })
+          ) {
             return false;
           }
         }
