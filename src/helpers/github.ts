@@ -58,6 +58,7 @@ export async function isCiGreen({ octokit, logger }: Context, sha: string, { own
     return retryAsync(
       async () => {
         const checkSuitePromises = checkSuites.check_suites.map(async (suite) => {
+          logger.debug(`Checking runs for suite ${suite.id}: ${suite.url}`);
           const { data: checkRuns } = await octokit.checks.listForSuite({
             owner,
             repo,
@@ -81,8 +82,9 @@ export async function isCiGreen({ octokit, logger }: Context, sha: string, { own
         until(lastResult) {
           if (lastResult === null) {
             logger.info("Not all CI runs were complete, will retry...");
+            return false;
           }
-          return lastResult !== null;
+          return lastResult;
         },
         maxTry: 100,
         delay: 60000,
