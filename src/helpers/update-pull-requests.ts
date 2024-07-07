@@ -2,7 +2,7 @@ import ms from "ms";
 import { PullRequest } from "../adapters/sqlite/entities/pull-request";
 import { getAllTimelineEvents } from "../handlers/github-events";
 import { Context } from "../types";
-import { getMergeTimeout, IssueParams, parseGitHubUrl } from "./github";
+import { getApprovalCount, getMergeTimeoutAndApprovalRequiredCount, IssueParams, parseGitHubUrl } from "./github";
 
 type IssueEvent = {
   created_at?: string;
@@ -53,10 +53,14 @@ export async function updatePullRequests(context: Context) {
 
       const lastActivityDate = new Date(Math.max(...eventDates.map((date) => date.getTime())));
 
-      const mergeTimeout = await getMergeTimeout(context, gitHubUrl);
-      if (isNaN(lastActivityDate.getTime()) || isPastOffset(lastActivityDate, mergeTimeout)) {
-        context.logger.info(`Pull-request ${pullRequest.url} is past its due date (${mergeTimeout} after ${lastActivityDate}), will merge.`);
-        await mergePullRequest(context, pullRequest, gitHubUrl);
+      const requirements = await getMergeTimeoutAndApprovalRequiredCount(context, gitHubUrl);
+      if (isNaN(lastActivityDate.getTime()) || isPastOffset(lastActivityDate, requirements.mergeTimeout)) {
+        if ((await getApprovalCount(context, gitHubUrl)) > 0) {
+          context.logger.info(`Pull-request ${pullRequest.url} is past its due date (${requirements} after ${lastActivityDate}), will merge.`);
+          await mergePullRequest(context, pullRequest, gitHubUrl);
+        } else {
+          context.logger.info(`Pull-request ${pullRequest.url} does not have sufficient reviewer approvals to be merged.`);
+        }
       } else {
         await context.adapters.sqlite.pullRequest.update(pullRequest.url, lastActivityDate);
         context.logger.info(`Updated PR ${pullRequest.url} to a new timestamp (${lastActivityDate})`);

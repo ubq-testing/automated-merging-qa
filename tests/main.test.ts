@@ -3,7 +3,7 @@ import { http, HttpResponse } from "msw";
 import * as fs from "node:fs";
 import { initializeDataSource } from "../src/adapters/sqlite/data-source";
 import { PullRequest } from "../src/adapters/sqlite/entities/pull-request";
-import { getMergeTimeout } from "../src/helpers/github";
+import { getMergeTimeoutAndApprovalRequiredCount } from "../src/helpers/github";
 import { server } from "./__mocks__/node";
 import { expect, describe, beforeAll, beforeEach, afterAll, afterEach, it, jest } from "@jest/globals";
 import { Context } from "../src/types";
@@ -187,9 +187,11 @@ describe("Action tests", () => {
     expect(pullRequests).toHaveLength(0);
   });
 
-  it("Should pick the timeout according to the assignee's status", async () => {
+  it("Should pick the timeout according to the assignees status", async () => {
     const contributorMergeTimeout = "7 days";
     const collaboratorMergeTimeout = "3.5 days";
+    const collaboratorMinimumApprovalsRequired = 2;
+    const contributorMinimumApprovalsRequired = 1;
     const context = {
       logger: {
         debug: console.log,
@@ -202,10 +204,15 @@ describe("Action tests", () => {
       config: {
         contributorMergeTimeout,
         collaboratorMergeTimeout,
+        collaboratorMinimumApprovalsRequired,
+        contributorMinimumApprovalsRequired,
       },
       octokit: new Octokit(),
     } as unknown as Context;
-    await expect(getMergeTimeout(context, { owner: "ubiquibot", repo: "automated-merging", issue_number: 1 })).resolves.toEqual(collaboratorMergeTimeout);
+    await expect(getMergeTimeoutAndApprovalRequiredCount(context, { owner: "ubiquibot", repo: "automated-merging", issue_number: 1 })).resolves.toEqual({
+      mergeTimeout: collaboratorMergeTimeout,
+      requiredApprovalCount: collaboratorMinimumApprovalsRequired,
+    });
     server.use(
       http.get(
         "https://api.github.com/repos/:org/:repo/collaborators/:login",
@@ -215,6 +222,9 @@ describe("Action tests", () => {
         { once: true }
       )
     );
-    await expect(getMergeTimeout(context, { owner: "ubiquibot", repo: "automated-merging", issue_number: 1 })).resolves.toEqual(contributorMergeTimeout);
+    await expect(getMergeTimeoutAndApprovalRequiredCount(context, { owner: "ubiquibot", repo: "automated-merging", issue_number: 1 })).resolves.toEqual({
+      mergeTimeout: contributorMergeTimeout,
+      requiredApprovalCount: contributorMinimumApprovalsRequired,
+    });
   });
 });
