@@ -18,24 +18,16 @@ export type IssueParams = ReturnType<typeof parseGitHubUrl>;
  * Gets the merge timeout depending on the status of the assignee. If there are multiple assignees with different
  * statuses, the longest timeout is chosen.
  */
-export async function getMergeTimeoutAndApprovalRequiredCount(context: Context, { repo, owner }: IssueParams) {
-  const assignees = context.payload.pull_request.assignees || [];
-  let timeout = { mergeTimeout: context.config.contributorMergeTimeout, requiredApprovalCount: context.config.contributorMinimumApprovalsRequired };
-  for (const assignee of assignees) {
-    try {
-      await context.octokit.repos.checkCollaborator({
-        repo,
-        owner,
-        username: assignee.login,
-      });
-      timeout = { mergeTimeout: context.config.collaboratorMergeTimeout, requiredApprovalCount: context.config.collaboratorMinimumApprovalsRequired };
-    } catch (e) {
-      context.logger.debug(`${assignee.login} is not a collaborator of ${owner}/${repo}: ${e}`);
-      timeout = { mergeTimeout: context.config.contributorMergeTimeout, requiredApprovalCount: context.config.contributorMinimumApprovalsRequired };
-      break;
-    }
-  }
-  return timeout;
+export async function getMergeTimeoutAndApprovalRequiredCount(context: Context, authorAssociation: string) {
+  const timeoutCollaborator = {
+    mergeTimeout: context.config.collaboratorMergeTimeout,
+    requiredApprovalCount: context.config.collaboratorMinimumApprovalsRequired,
+  };
+  const timeoutContributor = {
+    mergeTimeout: context.config.contributorMergeTimeout,
+    requiredApprovalCount: context.config.contributorMinimumApprovalsRequired,
+  };
+  return authorAssociation === "COLLABORATOR" ? timeoutCollaborator : timeoutContributor;
 }
 
 export async function getApprovalCount({ octokit, logger }: Context, { owner, repo, issue_number: pullNumber }: IssueParams) {
