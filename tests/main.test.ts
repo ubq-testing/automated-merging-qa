@@ -235,7 +235,7 @@ describe("Action tests", () => {
       },
       octokit: new Octokit(),
     } as unknown as Context;
-    await expect(getMergeTimeoutAndApprovalRequiredCount(context, issueParams)).resolves.toEqual({
+    await expect(getMergeTimeoutAndApprovalRequiredCount(context, "COLLABORATOR")).resolves.toEqual({
       mergeTimeout: collaboratorMergeTimeout,
       requiredApprovalCount: collaboratorMinimumApprovalsRequired,
     });
@@ -248,7 +248,7 @@ describe("Action tests", () => {
         { once: true }
       )
     );
-    await expect(getMergeTimeoutAndApprovalRequiredCount(context, issueParams)).resolves.toEqual({
+    await expect(getMergeTimeoutAndApprovalRequiredCount(context, "CONTRIBUTOR")).resolves.toEqual({
       mergeTimeout: contributorMergeTimeout,
       requiredApprovalCount: contributorMinimumApprovalsRequired,
     });
