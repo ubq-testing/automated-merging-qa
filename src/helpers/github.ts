@@ -21,12 +21,12 @@ export type IssueParams = ReturnType<typeof parseGitHubUrl>;
  */
 export async function getMergeTimeoutAndApprovalRequiredCount(context: Context, authorAssociation: string) {
   const timeoutCollaborator = {
-    mergeTimeout: context.config.collaboratorMergeTimeout,
-    requiredApprovalCount: context.config.collaboratorMinimumApprovalsRequired,
+    mergeTimeout: context.config.mergeTimeout.collaborator,
+    requiredApprovalCount: context.config.approvalsRequired.collaborator,
   };
   const timeoutContributor = {
-    mergeTimeout: context.config.contributorMergeTimeout,
-    requiredApprovalCount: context.config.contributorMinimumApprovalsRequired,
+    mergeTimeout: context.config.mergeTimeout.contributor,
+    requiredApprovalCount: context.config.approvalsRequired.contributor,
   };
   return authorAssociation === "COLLABORATOR" || authorAssociation === "MEMBER" ? timeoutCollaborator : timeoutContributor;
 }

@@ -238,10 +238,14 @@ describe("Action tests", () => {
         },
       },
       config: {
-        contributorMergeTimeout,
-        collaboratorMergeTimeout,
-        collaboratorMinimumApprovalsRequired,
-        contributorMinimumApprovalsRequired,
+        mergeTimeout: {
+          contributor: contributorMergeTimeout,
+          collaborator: collaboratorMergeTimeout,
+        },
+        approvalsRequired: {
+          collaborator: collaboratorMinimumApprovalsRequired,
+          contributor: contributorMinimumApprovalsRequired,
+        },
       },
       octokit: new Octokit(),
     } as unknown as Context;

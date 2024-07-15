@@ -19,8 +19,14 @@ describe("User tests", () => {
           inputs: {
             eventName: "pull_request.opened",
             settings: JSON.stringify({
-              collaboratorMinimumApprovalsRequired: 0,
-              contributorMinimumApprovalsRequired: 0,
+              approvalsRequired: {
+                collaborator: 0,
+                contributor: 0,
+              },
+              mergeTimeout: {
+                collaborator: "3.5 days",
+                contributor: "7 days",
+              },
             }),
             eventPayload: JSON.stringify({
               pull_request: {
@@ -36,7 +42,7 @@ describe("User tests", () => {
     }));
     const run = (await import("../src/action")).run;
     await expect(run()).rejects.toThrow(
-      "Invalid settings provided:\n/collaboratorMinimumApprovalsRequired: Expected number to be greater or equal to 1;\n/contributorMinimumApprovalsRequired: Expected number to be greater or equal to 1"
+      "Invalid settings provided:\n/approvalsRequired/collaborator: Expected number to be greater or equal to 1;\n/approvalsRequired/contributor: Expected number to be greater or equal to 1"
     );
   });
 });
