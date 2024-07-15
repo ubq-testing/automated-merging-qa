@@ -56,7 +56,7 @@ export async function updatePullRequests(context: Context) {
         `Requirements according to association ${pullRequestDetails.author_association}: ${JSON.stringify(requirements)} with last activity date: ${lastActivityDate}`
       );
       if (isNaN(lastActivityDate.getTime()) || isPastOffset(lastActivityDate, requirements.mergeTimeout)) {
-        if ((await getApprovalCount(context, gitHubUrl)) > 0) {
+        if ((await getApprovalCount(context, gitHubUrl)) > requirements.requiredApprovalCount) {
           if (await isCiGreen(context, pullRequestDetails.head.sha, gitHubUrl)) {
             context.logger.info(`Pull-request ${pullRequest.url} is past its due date (${requirements.mergeTimeout} after ${lastActivityDate}), will merge.`);
             await mergePullRequest(context, pullRequest, gitHubUrl);
