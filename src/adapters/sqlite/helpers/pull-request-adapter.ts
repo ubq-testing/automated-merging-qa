@@ -12,7 +12,6 @@ export class PullRequestAdapter extends Super {
     const pullRequest = new PullRequest();
 
     pullRequest.url = url;
-    pullRequest.lastActivity = new Date();
     try {
       return await pullRequest.save();
     } catch (e) {
@@ -34,23 +33,6 @@ export class PullRequestAdapter extends Super {
       }
     } catch (e) {
       this.context.logger.error(`Failed to delete the item ${url}: ${e}`);
-    }
-  }
-
-  public async update(url: string, lastActivity: Date) {
-    try {
-      const repository = this.sqlite.getRepository(PullRequest);
-      const itemToUpdate = await repository.findOneBy({
-        url,
-      });
-      if (itemToUpdate) {
-        itemToUpdate.lastActivity = lastActivity;
-        await itemToUpdate.save();
-      } else {
-        this.context.logger.error(`Could not find item for update ${url}`);
-      }
-    } catch (e) {
-      this.context.logger.error(`Failed to save the item ${url}: ${e}`);
     }
   }
 

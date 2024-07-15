@@ -80,7 +80,6 @@ describe("Action tests", () => {
     const dataSource = await initializeDataSource(dbName);
     const pr = new PullRequest();
     pr.url = htmlUrl;
-    pr.lastActivity = new Date();
     await pr.save();
     server.use(
       http.get(
@@ -127,7 +126,6 @@ describe("Action tests", () => {
     const dataSource = await initializeDataSource(dbName);
     const pr = new PullRequest();
     pr.url = htmlUrl;
-    pr.lastActivity = new Date();
     await pr.save();
     server.use(
       http.get(
@@ -183,7 +181,6 @@ describe("Action tests", () => {
     pr.url = htmlUrl;
     const lastActivityDate = new Date();
     lastActivityDate.setDate(new Date().getDate() - 8);
-    pr.lastActivity = lastActivityDate;
     await pr.save();
     server.use(
       http.get(

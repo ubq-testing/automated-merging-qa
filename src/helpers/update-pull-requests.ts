@@ -67,8 +67,7 @@ export async function updatePullRequests(context: Context) {
           context.logger.info(`Pull-request ${pullRequest.url} does not have sufficient reviewer approvals to be merged.`);
         }
       } else {
-        await context.adapters.sqlite.pullRequest.update(pullRequest.url, lastActivityDate);
-        context.logger.info(`Updated PR ${pullRequest.url} to a new timestamp (${lastActivityDate})`);
+        context.logger.info(`PR ${pullRequest.url} has activity up until (${lastActivityDate}), nothing to do.`);
       }
     } catch (e) {
       context.logger.error(`Could not process pull-request ${pullRequest.url} for auto-merge: ${e}`);
