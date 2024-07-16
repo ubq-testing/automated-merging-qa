@@ -12,11 +12,11 @@ on the association of the pull-request author.
   description: "Automatically merge pull-requests."
   with:
     approvalsRequired:
-      collaborator: 1
-      contributor: 2
+      collaborator: 1 # defaults to 1
+      contributor: 2 # defaults to 2
     mergeTimeout:
-      collaborator: "3.5 days"
-      contributor: "7 days"
+      collaborator: "3.5 days" # defaults to 3.5 days
+      contributor: "7 days" # defaults to 7 days
 ```
 
 ## Testing
