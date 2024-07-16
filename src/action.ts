@@ -2,7 +2,7 @@ import * as github from "@actions/github";
 import { Octokit } from "@octokit/rest";
 import { Value } from "@sinclair/typebox/value";
 import { plugin } from "./plugin";
-import { envSchema, PluginInputs, pluginSettingsSchema, pluginSettingsValidator } from "./types";
+import { envSchema, envValidator, PluginInputs, pluginSettingsSchema, pluginSettingsValidator } from "./types";
 
 /**
  * How a GitHub action executes the plugin.
@@ -11,6 +11,14 @@ export async function run() {
   const payload = github.context.payload.inputs;
 
   payload.env = { ...(payload.env || {}), workflowName: github.context.workflow };
+  if (!envValidator.test(payload.env)) {
+    const errors: string[] = [];
+    for (const error of envValidator.errors(payload.env)) {
+      console.error(error);
+      errors.push(`${error.path}: ${error.message}`);
+    }
+    throw new Error(`Invalid environment provided:\n${errors.join(";\n")}`);
+  }
   const env = Value.Decode(envSchema, payload.env || {});
 
   payload.settings = Value.Default(pluginSettingsSchema, JSON.parse(payload.settings));
