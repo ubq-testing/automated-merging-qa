@@ -3,7 +3,9 @@ import { StaticDecode } from "@sinclair/typebox";
 import "dotenv/config";
 import { StandardValidator } from "typebox-validators";
 
-export const envSchema = T.Object({});
+export const envSchema = T.Object({
+  workflowName: T.String(),
+});
 
 export const envValidator = new StandardValidator(envSchema);
 
