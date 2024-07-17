@@ -46,13 +46,13 @@ export async function run() {
   await plugin(inputs, env);
   console.log("3.");
 
-  await returnDataToKernel("1234", inputs.stateId, {});
+  return await returnDataToKernel("1234", inputs.stateId, {});
 }
 
 export async function returnDataToKernel(repoToken: string, stateId: string, output: object) {
   console.log("4.", repoToken, stateId, output);
   const octokit = new Octokit({ auth: repoToken });
-  return await octokit.repos.createDispatchEvent({
+  return octokit.repos.createDispatchEvent({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     event_type: "return_data_to_ubiquibot_kernel",

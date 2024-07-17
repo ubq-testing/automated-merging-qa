@@ -5,8 +5,6 @@ beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-jest.mock("@octokit/rest", () => ({}));
-
 describe("Configuration tests", () => {
   it("Should deny the configuration if the required reviewers are less than 1", async () => {
     jest.mock("@actions/github", () => ({
