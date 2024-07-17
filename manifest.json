@@ -1,5 +1,5 @@
 {
   "name": "Automated merging",
   "description": "Automatically merge pull-requests.",
-  "ubiquity:listeners": [ "push" ]
+  "ubiquity:listeners": [ "push", "pull_request.labeled", "pull_request.unlabeled" ]
 }
