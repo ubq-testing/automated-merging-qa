@@ -41,12 +41,10 @@ export async function run() {
     authToken: payload.authToken,
     ref: payload.ref,
   };
-  console.log("2.");
 
   await plugin(inputs, env);
-  console.log("3.");
 
-  return await returnDataToKernel("1234", inputs.stateId, {});
+  return await returnDataToKernel(process.env.GITHUB_TOKEN, inputs.stateId, {});
 }
 
 export async function returnDataToKernel(repoToken: string, stateId: string, output: object) {
