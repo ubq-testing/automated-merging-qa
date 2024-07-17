@@ -10,7 +10,6 @@ import { envSchema, envValidator, PluginInputs, pluginSettingsSchema, pluginSett
 export async function run() {
   const payload = github.context.payload.inputs;
 
-  console.log("1.", process.env);
   payload.env = { ...(payload.env || {}), workflowName: github.context.workflow };
   if (!envValidator.test(payload.env)) {
     const errors: string[] = [];
@@ -44,11 +43,10 @@ export async function run() {
 
   await plugin(inputs, env);
 
-  return await returnDataToKernel(process.env.GITHUB_TOKEN, inputs.stateId, {});
+  return returnDataToKernel(process.env.GITHUB_TOKEN, inputs.stateId, {});
 }
 
-export async function returnDataToKernel(repoToken: string, stateId: string, output: object) {
-  console.log("4.", repoToken, stateId, output);
+async function returnDataToKernel(repoToken: string, stateId: string, output: object) {
   const octokit = new Octokit({ auth: repoToken });
   return octokit.repos.createDispatchEvent({
     owner: github.context.repo.owner,
