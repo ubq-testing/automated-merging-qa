@@ -1,5 +1,5 @@
 import * as github from "@actions/github";
-// import { Octokit } from "@octokit/rest";
+import { Octokit } from "@octokit/rest";
 import { Value } from "@sinclair/typebox/value";
 import { plugin } from "./plugin";
 import { envSchema, envValidator, PluginInputs, pluginSettingsSchema, pluginSettingsValidator } from "./types";
@@ -43,18 +43,18 @@ export async function run() {
 
   await plugin(inputs, env);
 
-  // return returnDataToKernel(process.env.GITHUB_TOKEN, inputs.stateId, {});
+  return returnDataToKernel(process.env.GITHUB_TOKEN, inputs.stateId, {});
 }
-//
-// async function returnDataToKernel(repoToken: string, stateId: string, output: object) {
-//   const octokit = new Octokit({ auth: repoToken });
-//   return octokit.repos.createDispatchEvent({
-//     owner: github.context.repo.owner,
-//     repo: github.context.repo.repo,
-//     event_type: "return_data_to_ubiquibot_kernel",
-//     client_payload: {
-//       state_id: stateId,
-//       output: JSON.stringify(output),
-//     },
-//   });
-// }
+
+export async function returnDataToKernel(repoToken: string, stateId: string, output: object) {
+  const octokit = new Octokit({ auth: repoToken });
+  return octokit.repos.createDispatchEvent({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    event_type: "return_data_to_ubiquibot_kernel",
+    client_payload: {
+      state_id: stateId,
+      output: JSON.stringify(output),
+    },
+  });
+}

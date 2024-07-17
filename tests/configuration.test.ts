@@ -1,9 +1,15 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, jest } from "@jest/globals";
+import { HttpResponse } from "msw";
 import { server } from "./__mocks__/node";
 
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
+
+jest.mock("../src/action", () => ({
+  ...(jest.requireActual("../src/action") as object),
+  returnDataToKernel: jest.fn(() => Promise.resolve(new HttpResponse())),
+}));
 
 describe("Configuration tests", () => {
   it("Should deny the configuration if the required reviewers are less than 1", async () => {
