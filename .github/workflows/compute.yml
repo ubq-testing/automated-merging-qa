@@ -44,6 +44,8 @@ jobs:
       - name: Execute directive
         run: npx tsx ./src/main.ts
         id: automated-merging
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Will try to upload the changes made within the DB during the run.
       # If all tries fail, an artifact containing the db is uploaded.
