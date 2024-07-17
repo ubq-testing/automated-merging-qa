@@ -10,7 +10,7 @@ import { envSchema, envValidator, PluginInputs, pluginSettingsSchema, pluginSett
 export async function run() {
   const payload = github.context.payload.inputs;
 
-  console.log("1.");
+  console.log("1.", process.env);
   payload.env = { ...(payload.env || {}), workflowName: github.context.workflow };
   if (!envValidator.test(payload.env)) {
     const errors: string[] = [];
