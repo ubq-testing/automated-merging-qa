@@ -46,7 +46,8 @@ export async function run() {
   await plugin(inputs, env);
   console.log("3.");
 
-  return await returnDataToKernel(process.env.GITHUB_TOKEN, inputs.stateId, {});
+  await returnDataToKernel(process.env.GITHUB_TOKEN, inputs.stateId, {});
+  return Promise.resolve(true);
 }
 
 export async function returnDataToKernel(repoToken: string, stateId: string, output: object) {
