@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, it, jest } from "@jest/globals";
+import { afterAll, afterEach, beforeAll, describe, expect, it, jest } from "@jest/globals";
 import { server } from "./__mocks__/node";
 
 beforeAll(() => server.listen());
@@ -41,9 +41,8 @@ describe("Configuration tests", () => {
       },
     }));
     const run = (await import("../src/action")).run;
-    await run();
-    // await expect(run()).rejects.toThrow(
-    //   "Invalid settings provided:\n/approvalsRequired/collaborator: Expected number to be greater or equal to 1;\n/approvalsRequired/contributor: Expected number to be greater or equal to 1"
-    // );
+    await expect(run()).rejects.toThrow(
+      "Invalid settings provided:\n/approvalsRequired/collaborator: Expected number to be greater or equal to 1;\n/approvalsRequired/contributor: Expected number to be greater or equal to 1"
+    );
   });
 });
