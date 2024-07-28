@@ -100,22 +100,18 @@ export async function isCiGreen({ octokit, logger, env }: Context, sha: string, 
   }
 }
 
-export async function getRepositories(targets: string[]): Promise<string[]> {
-  const entities = targets.reduce<{ repositories: string[]; organizations: string[] }>(
-    (acc, curr) => {
-      if (curr.includes("/")) {
-        acc.repositories.push(curr);
-      }
-      return acc;
-    },
-    {
-      repositories: [],
-      organizations: [],
+export async function getOpenPullRequests({ octokit, logger }: Context, targets: string[]): Promise<string[]> {
+  const promises = targets.map(async (target) => {
+    try {
+      const [org, repo] = target.split("/");
+      const repoFilter = repo ? `repo:${repo}` : "";
+      await octokit.request("GET /search/issues", {
+        q: `is:pr is:open draft:false org:${org} ${repoFilter}`,
+      });
+    } catch (e) {
+      logger.error(`Error getting open pull-requests for target: ${target}`);
     }
-  );
-  const promises = entities.organizations.map((organization) => {
-    return organization;
+    return target;
   });
-  const results = await Promise.all(promises);
-  return [...entities.repositories, ...results];
+  return await Promise.all(promises);
 }

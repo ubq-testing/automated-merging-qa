@@ -1,7 +1,7 @@
 import ms from "ms";
 import { getAllTimelineEvents } from "../handlers/github-events";
 import { Context } from "../types";
-import { getApprovalCount, getMergeTimeoutAndApprovalRequiredCount, getRepositories, isCiGreen, IssueParams, parseGitHubUrl } from "./github";
+import { getApprovalCount, getMergeTimeoutAndApprovalRequiredCount, getOpenPullRequests, isCiGreen, IssueParams, parseGitHubUrl } from "./github";
 
 type IssueEvent = {
   created_at?: string;
@@ -21,7 +21,7 @@ async function getPullRequestDetails(context: Context, { repo, owner, issue_numb
 }
 
 export async function updatePullRequests(context: Context) {
-  const pullRequests = await getRepositories(context.config.watch);
+  const pullRequests = await getOpenPullRequests(context, context.config.watch);
 
   if (!pullRequests?.length) {
     return context.logger.info("Nothing to do.");
