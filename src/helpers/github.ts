@@ -99,3 +99,23 @@ export async function isCiGreen({ octokit, logger, env }: Context, sha: string, 
     return false;
   }
 }
+
+export async function getRepositories(targets: string[]): Promise<string[]> {
+  const entities = targets.reduce<{ repositories: string[]; organizations: string[] }>(
+    (acc, curr) => {
+      if (curr.includes("/")) {
+        acc.repositories.push(curr);
+      }
+      return acc;
+    },
+    {
+      repositories: [],
+      organizations: [],
+    }
+  );
+  const promises = entities.organizations.map((organization) => {
+    return organization;
+  });
+  const results = await Promise.all(promises);
+  return [...entities.repositories, ...results];
+}

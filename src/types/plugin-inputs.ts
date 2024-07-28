@@ -45,9 +45,9 @@ export const pluginSettingsSchema = T.Object({
   approvalsRequired: approvalsRequiredSchema,
   mergeTimeout: mergeTimeoutSchema,
   /**
-   * The location of the database
+   * The list of organizations or repositories to watch for updates.
    */
-  databaseUrl: T.String({ default: "database/sql.db" }),
+  watch: T.Array(T.String(), { default: [] }),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
