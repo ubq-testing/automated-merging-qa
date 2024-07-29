@@ -16,6 +16,7 @@
     "knip": "knip --config .github/knip.ts",
     "knip-ci": "knip --no-exit-code --reporter json --config .github/knip.ts",
     "prepare": "husky install",
+    "start": "tsx src/index.ts",
     "test": "jest --setupFiles dotenv/config --coverage"
   },
   "keywords": [
