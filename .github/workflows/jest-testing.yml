@@ -21,8 +21,8 @@ jobs:
 
       - name: Jest With Coverage
         run: yarn install --immutable --immutable-cache --check-cache && yarn test
-        env:
-          GITHUB_TOKEN: "gh_token"
+#        env:
+#          GITHUB_TOKEN: "gh_token"
 
       - name: Add Jest Report to Summary
         if: always()
