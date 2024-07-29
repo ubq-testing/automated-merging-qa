@@ -33,7 +33,7 @@ export async function getMergeTimeoutAndApprovalRequiredCount(context: Context, 
 
 export async function getApprovalCount({ octokit, logger }: Context, { owner, repo, issue_number: pullNumber }: IssueParams) {
   try {
-    const { data: reviews } = await octokit.pulls.listReviews({
+    const { data: reviews } = await octokit.rest.pulls.listReviews({
       owner,
       repo,
       pull_number: pullNumber,
@@ -49,7 +49,7 @@ export async function isCiGreen({ octokit, logger, env }: Context, sha: string, 
   try {
     const ref = sha;
 
-    const { data: checkSuites } = await octokit.checks.listSuitesForRef({
+    const { data: checkSuites } = await octokit.rest.checks.listSuitesForRef({
       owner,
       repo,
       ref,
@@ -58,7 +58,7 @@ export async function isCiGreen({ octokit, logger, env }: Context, sha: string, 
       async () => {
         const checkSuitePromises = checkSuites.check_suites.map(async (suite) => {
           logger.debug(`Checking runs for suite ${suite.id}: ${suite.url}, and filter out ${env.workflowName}`);
-          const { data: checkRuns } = await octokit.checks.listForSuite({
+          const { data: checkRuns } = await octokit.rest.checks.listForSuite({
             owner,
             repo,
             check_suite_id: suite.id,
@@ -74,7 +74,7 @@ export async function isCiGreen({ octokit, logger, env }: Context, sha: string, 
             return null;
           } else if (
             filteredResults.find((o) => {
-              logger.debug(`Workflow ${o.name}/${o.id}[${o.url}]: ${o.status},${o.conclusion}`);
+              logger.debug(`Workflow ${o.name}/${o.id} [${o.url}]: ${o.status},${o.conclusion}`);
               return o.conclusion === "failure";
             })
           ) {
@@ -100,18 +100,29 @@ export async function isCiGreen({ octokit, logger, env }: Context, sha: string, 
   }
 }
 
-export async function getOpenPullRequests({ octokit, logger }: Context, targets: string[]): Promise<string[]> {
-  const promises = targets.map(async (target) => {
-    try {
-      const [org, repo] = target.split("/");
-      const repoFilter = repo ? `repo:${repo}` : "";
-      await octokit.request("GET /search/issues", {
-        q: `is:pr is:open draft:false org:${org} ${repoFilter}`,
-      });
-    } catch (e) {
-      logger.error(`Error getting open pull-requests for target: ${target}`);
+/**
+ * Returns all the pull requests that are opened and not a draft from the list of repos / organizations.
+ *
+ * https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests#search-only-issues-or-pull-requests
+ */
+export async function getOpenPullRequests({ octokit, logger }: Context, targets: string[]) {
+  const filter = targets.map((target) => {
+    let toExclude = "";
+    // If we have to exclude the target, happen a minus and remove it from the target name
+    if (target[0] === "-") {
+      toExclude = "-";
+      target = target.slice(1);
     }
-    return target;
+    const [org, repo] = target.split("/");
+    return repo ? `${toExclude}repo:${org}/${repo}` : `${toExclude}org:${org}`;
   });
-  return await Promise.all(promises);
+  try {
+    const results = await octokit.paginate("GET /search/issues", {
+      q: `is:pr is:open draft:false ${filter.join(" ")}`,
+    });
+    return results.flat();
+  } catch (e) {
+    logger.error(`Error getting open pull-requests for targets: [${targets.join(", ")}]. ${e}`);
+    return [];
+  }
 }

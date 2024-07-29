@@ -47,7 +47,7 @@ export const pluginSettingsSchema = T.Object({
   /**
    * The list of organizations or repositories to watch for updates.
    */
-  watch: T.Array(T.String(), { default: [] }),
+  watch: T.Array(T.String({ minLength: 1 }), { default: [] }),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
