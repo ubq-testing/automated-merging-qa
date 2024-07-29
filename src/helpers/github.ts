@@ -126,3 +126,21 @@ export async function getOpenPullRequests({ octokit, logger }: Context, targets:
     return [];
   }
 }
+
+export async function mergePullRequest(context: Context, { repo, owner, issue_number: pullNumber }: IssueParams) {
+  await context.octokit.pulls.merge({
+    owner,
+    repo,
+    pull_number: pullNumber,
+  });
+}
+
+export async function getPullRequestDetails(context: Context, { repo, owner, issue_number: pullNumber }: IssueParams) {
+  const response = await context.octokit.rest.pulls.get({
+    repo,
+    owner,
+    pull_number: pullNumber,
+  });
+  console.log(response);
+  return response.data;
+}

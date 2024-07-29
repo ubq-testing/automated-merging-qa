@@ -1,7 +1,15 @@
 import ms from "ms";
 import { getAllTimelineEvents } from "../handlers/github-events";
 import { Context } from "../types";
-import { getApprovalCount, getMergeTimeoutAndApprovalRequiredCount, getOpenPullRequests, isCiGreen, IssueParams, parseGitHubUrl } from "./github";
+import {
+  getApprovalCount,
+  getMergeTimeoutAndApprovalRequiredCount,
+  getOpenPullRequests,
+  getPullRequestDetails,
+  isCiGreen,
+  mergePullRequest,
+  parseGitHubUrl,
+} from "./github";
 
 type IssueEvent = {
   created_at?: string;
@@ -9,16 +17,6 @@ type IssueEvent = {
   timestamp?: string;
   commented_at?: string;
 };
-
-async function getPullRequestDetails(context: Context, { repo, owner, issue_number: pullNumber }: IssueParams) {
-  const response = await context.octokit.rest.pulls.get({
-    repo,
-    owner,
-    pull_number: pullNumber,
-  });
-  console.log(response);
-  return response.data;
-}
 
 export async function updatePullRequests(context: Context) {
   const pullRequests = await getOpenPullRequests(context, context.config.watch);
@@ -67,14 +65,6 @@ export async function updatePullRequests(context: Context) {
       context.logger.error(`Could not process pull-request ${html_url} for auto-merge: ${e}`);
     }
   }
-}
-
-async function mergePullRequest(context: Context, { repo, owner, issue_number: pullNumber }: IssueParams) {
-  await context.octokit.pulls.merge({
-    owner,
-    repo,
-    pull_number: pullNumber,
-  });
 }
 
 function isPastOffset(lastActivityDate: Date, offset: string): boolean {

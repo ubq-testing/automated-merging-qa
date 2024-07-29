@@ -1,7 +1,7 @@
 import { drop } from "@mswjs/data";
 import { Octokit } from "@octokit/rest";
 import { http, HttpResponse } from "msw";
-import { getMergeTimeoutAndApprovalRequiredCount, isCiGreen } from "../src/helpers/github";
+import * as githubHelpers from "../src/helpers/github";
 import { db } from "./__mocks__/db";
 import { server } from "./__mocks__/node";
 import { expect, describe, beforeAll, beforeEach, afterAll, afterEach, it, jest } from "@jest/globals";
@@ -16,6 +16,7 @@ const htmlUrl = "https://github.com/ubiquibot/automated-merging/pull/1";
 const actionsGithubPackage = "@actions/github";
 const issueParams = { owner: "ubiquibot", repo: "automated-merging", issue_number: 1 };
 const workflow = "workflow";
+const githubHelpersPath = "../src/helpers/github";
 
 describe("Action tests", () => {
   beforeEach(() => {
@@ -73,8 +74,18 @@ describe("Action tests", () => {
         },
       },
     }));
+    const mergePullRequest = jest.fn();
+    jest.mock(githubHelpersPath, () => {
+      const actualModule = jest.requireActual(githubHelpersPath) as object;
+      return {
+        __esModule: true,
+        ...actualModule,
+        mergePullRequest,
+      };
+    });
     const run = (await import("../src/action")).run;
     await expect(run()).resolves.toMatchObject({ status: 200 });
+    expect(mergePullRequest).not.toHaveBeenCalled();
   });
 
   it("Should close a PR that is past the threshold", async () => {
@@ -115,8 +126,18 @@ describe("Action tests", () => {
         },
       },
     }));
+    const mergePullRequest = jest.fn();
+    jest.mock(githubHelpersPath, () => {
+      const actualModule = jest.requireActual(githubHelpersPath) as object;
+      return {
+        __esModule: true,
+        ...actualModule,
+        mergePullRequest,
+      };
+    });
     const run = (await import("../src/action")).run;
     await expect(run()).resolves.toMatchObject({ status: 200 });
+    expect(mergePullRequest).toHaveBeenCalled();
   });
 
   it("Should pick the timeout according to the assignees status", async () => {
@@ -145,7 +166,7 @@ describe("Action tests", () => {
       },
       octokit: new Octokit(),
     } as unknown as Context;
-    await expect(getMergeTimeoutAndApprovalRequiredCount(context, "COLLABORATOR")).resolves.toEqual({
+    await expect(githubHelpers.getMergeTimeoutAndApprovalRequiredCount(context, "COLLABORATOR")).resolves.toEqual({
       mergeTimeout: collaboratorMergeTimeout,
       requiredApprovalCount: collaboratorMinimumApprovalsRequired,
     });
@@ -158,7 +179,7 @@ describe("Action tests", () => {
         { once: true }
       )
     );
-    await expect(getMergeTimeoutAndApprovalRequiredCount(context, "CONTRIBUTOR")).resolves.toEqual({
+    await expect(githubHelpers.getMergeTimeoutAndApprovalRequiredCount(context, "CONTRIBUTOR")).resolves.toEqual({
       mergeTimeout: contributorMergeTimeout,
       requiredApprovalCount: contributorMinimumApprovalsRequired,
     });
@@ -199,6 +220,6 @@ describe("Action tests", () => {
         workflowName: workflow,
       },
     } as unknown as Context;
-    await expect(isCiGreen(context, "1", issueParams)).resolves.toEqual(true);
+    await expect(githubHelpers.isCiGreen(context, "1", issueParams)).resolves.toEqual(true);
   });
 });
