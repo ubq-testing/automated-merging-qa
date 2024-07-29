@@ -141,6 +141,5 @@ export async function getPullRequestDetails(context: Context, { repo, owner, iss
     owner,
     pull_number: pullNumber,
   });
-  console.log(response);
   return response.data;
 }
