@@ -19,11 +19,11 @@ type IssueEvent = {
 };
 
 export async function updatePullRequests(context: Context) {
-  if (!context.config.watch.length) {
+  if (!context.config.repos.monitor.length) {
     return context.logger.info("No organizations or repo have been specified, skipping.");
   }
 
-  const pullRequests = await getOpenPullRequests(context, context.config.watch);
+  const pullRequests = await getOpenPullRequests(context, context.config.repos);
 
   if (!pullRequests?.length) {
     return context.logger.info("Nothing to do.");

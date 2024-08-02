@@ -1,5 +1,6 @@
 import { retryAsync } from "ts-retry";
-import { Context } from "../types";
+import { Context, ReposWatchSettings } from "../types";
+import * as github from "@actions/github";
 
 export function parseGitHubUrl(url: string) {
   const path = new URL(url).pathname.split("/");
@@ -100,29 +101,47 @@ export async function isCiGreen({ octokit, logger, env }: Context, sha: string, 
   }
 }
 
+function parseTarget(target: string) {
+  const owner = github.context.repo.owner;
+  const [orgParsed, repoParsed] = target.split("/");
+  let repoTarget = null;
+  if (orgParsed !== owner) {
+    return null;
+  } else if (repoParsed) {
+    repoTarget = repoParsed;
+  }
+  return { org: owner, repo: repoTarget };
+}
+
 /**
  * Returns all the pull requests that are opened and not a draft from the list of repos / organizations.
  *
  * https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests#search-only-issues-or-pull-requests
  */
-export async function getOpenPullRequests({ octokit, logger }: Context, targets: string[]) {
-  const filter = targets.map((target) => {
-    let toExclude = "";
-    // If we have to exclude the target, happen a minus and remove it from the target name
-    if (target[0] === "-") {
-      toExclude = "-";
-      target = target.slice(1);
-    }
-    const [org, repo] = target.split("/");
-    return repo ? `${toExclude}repo:${org}/${repo}` : `${toExclude}org:${org}`;
-  });
+export async function getOpenPullRequests({ octokit, logger }: Context, targets: ReposWatchSettings) {
+  const filter = [
+    ...targets.monitor.reduce<string[]>((acc, curr) => {
+      const parsedTarget = parseTarget(curr);
+      if (parsedTarget) {
+        return [...acc, parsedTarget.repo ? `repo:${parsedTarget.org}/${parsedTarget.repo}` : `org:${parsedTarget.org}`];
+      }
+      return acc;
+    }, []),
+    ...targets.ignore.reduce<string[]>((acc, curr) => {
+      const parsedTarget = parseTarget(curr);
+      if (parsedTarget) {
+        return [...acc, parsedTarget.repo ? `-repo:${parsedTarget.org}/${parsedTarget.repo}` : `-org:${parsedTarget.org}`];
+      }
+      return acc;
+    }, []),
+  ];
   try {
     const results = await octokit.paginate("GET /search/issues", {
       q: `is:pr is:open draft:false ${filter.join(" ")}`,
     });
     return results.flat();
   } catch (e) {
-    logger.error(`Error getting open pull-requests for targets: [${targets.join(", ")}]. ${e}`);
+    logger.error(`Error getting open pull-requests for targets: [${filter.join(", ")}]. ${e}`);
     return [];
   }
 }
