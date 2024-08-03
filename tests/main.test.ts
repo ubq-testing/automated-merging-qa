@@ -60,7 +60,7 @@ describe("Action tests", () => {
           inputs: {
             eventName: "push",
             settings: JSON.stringify({
-              watch: ["ubiquibot/automated-merging"],
+              repos: { monitor: ["ubiquibot/automated-merging"] },
             }),
             eventPayload: JSON.stringify({
               pull_request: {
@@ -119,7 +119,7 @@ describe("Action tests", () => {
           inputs: {
             eventName: "push",
             settings: JSON.stringify({
-              watch: ["ubiquibot/automated-merging"],
+              repos: { monitor: ["ubiquibot/automated-merging"] },
             }),
             eventPayload: JSON.stringify({
               pull_request: {
