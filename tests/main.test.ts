@@ -66,6 +66,9 @@ describe("Action tests", () => {
               pull_request: {
                 html_url: htmlUrl,
               },
+              repository: {
+                owner: "ubiquibot",
+              },
             }),
             env: {
               workflowName: workflow,
@@ -124,6 +127,9 @@ describe("Action tests", () => {
             eventPayload: JSON.stringify({
               pull_request: {
                 html_url: htmlUrl,
+              },
+              repository: {
+                owner: "ubiquibot",
               },
             }),
             env: {
