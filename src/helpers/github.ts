@@ -1,6 +1,5 @@
 import { retryAsync } from "ts-retry";
 import { Context, ReposWatchSettings } from "../types";
-import * as github from "@actions/github";
 
 export function parseGitHubUrl(url: string) {
   const path = new URL(url).pathname.split("/");
@@ -101,8 +100,8 @@ export async function isCiGreen({ octokit, logger, env }: Context, sha: string, 
   }
 }
 
-function parseTarget(target: string) {
-  const owner = github.context.repo.owner;
+function parseTarget({ payload }: Context, target: string) {
+  const owner = payload.repository.owner || "";
   const [orgParsed, repoParsed] = target.split("/");
   let repoTarget = null;
   if (orgParsed !== owner) {
@@ -118,17 +117,18 @@ function parseTarget(target: string) {
  *
  * https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests#search-only-issues-or-pull-requests
  */
-export async function getOpenPullRequests({ octokit, logger }: Context, targets: ReposWatchSettings) {
+export async function getOpenPullRequests(context: Context, targets: ReposWatchSettings) {
+  const { octokit, logger } = context;
   const filter = [
     ...targets.monitor.reduce<string[]>((acc, curr) => {
-      const parsedTarget = parseTarget(curr);
+      const parsedTarget = parseTarget(context, curr);
       if (parsedTarget) {
         return [...acc, parsedTarget.repo ? `repo:${parsedTarget.org}/${parsedTarget.repo}` : `org:${parsedTarget.org}`];
       }
       return acc;
     }, []),
     ...targets.ignore.reduce<string[]>((acc, curr) => {
-      const parsedTarget = parseTarget(curr);
+      const parsedTarget = parseTarget(context, curr);
       if (parsedTarget) {
         return [...acc, parsedTarget.repo ? `-repo:${parsedTarget.org}/${parsedTarget.repo}` : `-org:${parsedTarget.org}`];
       }
