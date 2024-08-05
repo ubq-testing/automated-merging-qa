@@ -136,10 +136,10 @@ export async function getOpenPullRequests({ octokit, logger }: Context, targets:
     }, []),
   ];
   try {
-    const results = await octokit.paginate("GET /search/issues", {
+    const { data } = await octokit.rest.search.issuesAndPullRequests({
       q: `is:pr is:open draft:false ${filter.join(" ")}`,
     });
-    return results.flat();
+    return data.items.flat();
   } catch (e) {
     logger.error(`Error getting open pull-requests for targets: [${filter.join(", ")}]. ${e}`);
     return [];
