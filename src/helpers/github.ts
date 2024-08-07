@@ -142,7 +142,7 @@ export async function getOpenPullRequests(context: Context, targets: ReposWatchS
     return data.flat();
   } catch (e) {
     logger.error(`Error getting open pull-requests for targets: [${filter.join(", ")}]. ${e}`);
-    return [];
+    throw e;
   }
 }
 

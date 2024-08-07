@@ -17,6 +17,7 @@ const actionsGithubPackage = "@actions/github";
 const issueParams = { owner: "ubiquibot", repo: "automated-merging", issue_number: 1 };
 const workflow = "workflow";
 const githubHelpersPath = "../src/helpers/github";
+const monitor = "ubiquibot/automated-merging";
 
 describe("Action tests", () => {
   beforeEach(() => {
@@ -60,7 +61,7 @@ describe("Action tests", () => {
           inputs: {
             eventName: "push",
             settings: JSON.stringify({
-              repos: { monitor: ["ubiquibot/automated-merging"] },
+              repos: { monitor: [monitor] },
             }),
             eventPayload: JSON.stringify({
               pull_request: {
@@ -122,7 +123,7 @@ describe("Action tests", () => {
           inputs: {
             eventName: "push",
             settings: JSON.stringify({
-              repos: { monitor: ["ubiquibot/automated-merging"] },
+              repos: { monitor: [monitor] },
             }),
             eventPayload: JSON.stringify({
               pull_request: {
@@ -234,5 +235,44 @@ describe("Action tests", () => {
       },
     } as unknown as Context;
     await expect(githubHelpers.isCiGreen(context, "1", issueParams)).resolves.toEqual(true);
+  });
+
+  it("Should throw an error if the search fails", async () => {
+    server.use(
+      http.get("https://api.github.com/search/issues", () => {
+        return HttpResponse.json({ error: "Some error" }, { status: 500 });
+      })
+    );
+    jest.mock(actionsGithubPackage, () => ({
+      context: {
+        repo: {
+          owner: {
+            login: "ubiquibot",
+          },
+        },
+        workflow,
+        payload: {
+          inputs: {
+            eventName: "push",
+            settings: JSON.stringify({
+              repos: { monitor: [monitor] },
+            }),
+            eventPayload: JSON.stringify({
+              pull_request: {
+                html_url: htmlUrl,
+              },
+              repository: {
+                owner: "ubiquibot",
+              },
+            }),
+            env: {
+              workflowName: workflow,
+            },
+          },
+        },
+      },
+    }));
+    const run = (await import("../src/action")).run;
+    await expect(run()).rejects.toThrow();
   });
 });
