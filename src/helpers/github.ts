@@ -14,12 +14,16 @@ export function parseGitHubUrl(url: string) {
 }
 
 export type IssueParams = ReturnType<typeof parseGitHubUrl>;
+export interface Requirements {
+  mergeTimeout: string;
+  requiredApprovalCount: number;
+}
 
 /**
  * Gets the merge timeout depending on the status of the assignee. If there are multiple assignees with different
  * statuses, the longest timeout is chosen.
  */
-export async function getMergeTimeoutAndApprovalRequiredCount(context: Context, authorAssociation: string) {
+export async function getMergeTimeoutAndApprovalRequiredCount(context: Context, authorAssociation: string): Promise<Requirements> {
   const timeoutCollaborator = {
     mergeTimeout: context.config.mergeTimeout.collaborator,
     requiredApprovalCount: context.config.approvalsRequired.collaborator,

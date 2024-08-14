@@ -1,3 +1,4 @@
+import { RestEndpointMethodTypes } from "@octokit/rest";
 import ms from "ms";
 import { getAllTimelineEvents } from "../handlers/github-events";
 import { Context } from "../types";
@@ -7,8 +8,10 @@ import {
   getOpenPullRequests,
   getPullRequestDetails,
   isCiGreen,
+  IssueParams,
   mergePullRequest,
   parseGitHubUrl,
+  Requirements,
 } from "./github";
 
 type IssueEvent = {
@@ -51,23 +54,38 @@ export async function updatePullRequests(context: Context) {
       context.logger.debug(
         `Requirements according to association ${pullRequestDetails.author_association}: ${JSON.stringify(requirements)} with last activity date: ${lastActivityDate}`
       );
-      if (isNaN(lastActivityDate.getTime()) || isPastOffset(lastActivityDate, requirements.mergeTimeout)) {
-        if ((await getApprovalCount(context, gitHubUrl)) >= requirements.requiredApprovalCount) {
-          if (await isCiGreen(context, pullRequestDetails.head.sha, gitHubUrl)) {
-            context.logger.info(`Pull-request ${html_url} is past its due date (${requirements.mergeTimeout} after ${lastActivityDate}), will merge.`);
-            await mergePullRequest(context, gitHubUrl);
-          } else {
-            context.logger.info(`Pull-request ${html_url} (sha: ${pullRequestDetails.head.sha}) does not pass all CI tests, won't merge.`);
-          }
-        } else {
-          context.logger.info(`Pull-request ${html_url} does not have sufficient reviewer approvals to be merged.`);
-        }
+      if (isNaN(lastActivityDate.getTime())) {
+        context.logger.info(`PR ${html_url} does not seem to have any activity, nothing to do.`);
+      } else if (isPastOffset(lastActivityDate, requirements.mergeTimeout)) {
+        await attemptMerging(context, { gitHubUrl, htmlUrl: html_url, requirements, lastActivityDate, pullRequestDetails });
       } else {
         context.logger.info(`PR ${html_url} has activity up until (${lastActivityDate}), nothing to do.`);
       }
     } catch (e) {
       context.logger.error(`Could not process pull-request ${html_url} for auto-merge: ${e}`);
     }
+  }
+}
+
+async function attemptMerging(
+  context: Context,
+  data: {
+    gitHubUrl: IssueParams;
+    htmlUrl: string;
+    requirements: Requirements;
+    lastActivityDate: Date;
+    pullRequestDetails: RestEndpointMethodTypes["pulls"]["get"]["response"]["data"];
+  }
+) {
+  if ((await getApprovalCount(context, data.gitHubUrl)) >= data.requirements.requiredApprovalCount) {
+    if (await isCiGreen(context, data.pullRequestDetails.head.sha, data.gitHubUrl)) {
+      context.logger.info(`Pull-request ${data.htmlUrl} is past its due date (${data.requirements.mergeTimeout} after ${data.lastActivityDate}), will merge.`);
+      await mergePullRequest(context, data.gitHubUrl);
+    } else {
+      context.logger.info(`Pull-request ${data.htmlUrl} (sha: ${data.pullRequestDetails.head.sha}) does not pass all CI tests, won't merge.`);
+    }
+  } else {
+    context.logger.info(`Pull-request ${data.htmlUrl} does not have sufficient reviewer approvals to be merged.`);
   }
 }
 
