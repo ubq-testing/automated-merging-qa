@@ -32,7 +32,7 @@ export async function getMergeTimeoutAndApprovalRequiredCount(context: Context, 
     mergeTimeout: context.config.mergeTimeout.contributor,
     requiredApprovalCount: context.config.approvalsRequired.contributor,
   };
-  return authorAssociation === "COLLABORATOR" || authorAssociation === "MEMBER" ? timeoutCollaborator : timeoutContributor;
+  return ["COLLABORATOR", "MEMBER", "OWNER"].includes(authorAssociation) ? timeoutCollaborator : timeoutContributor;
 }
 
 export async function getApprovalCount({ octokit, logger }: Context, { owner, repo, issue_number: pullNumber }: IssueParams) {
@@ -151,7 +151,7 @@ export async function getOpenPullRequests(context: Context, targets: ReposWatchS
 }
 
 export async function mergePullRequest(context: Context, { repo, owner, issue_number: pullNumber }: IssueParams) {
-  await context.octokit.pulls.merge({
+  await context.octokit.rest.pulls.merge({
     owner,
     repo,
     pull_number: pullNumber,
