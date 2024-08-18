@@ -128,8 +128,13 @@ function parseTarget({ payload, logger }: Context, target: string) {
  */
 export async function getOpenPullRequests(context: Context, targets: ReposWatchSettings) {
   const { octokit, logger } = context;
+  // If no repo to monitor is set, defaults to the organization
+  const monitor = [...targets.monitor];
+  if (!monitor.length) {
+    monitor.push(`org: ${context.payload.repository.owner?.login}`);
+  }
   const filter = [
-    ...targets.monitor.reduce<string[]>((acc, curr) => {
+    ...monitor.reduce<string[]>((acc, curr) => {
       const parsedTarget = parseTarget(context, curr);
       if (parsedTarget) {
         return [...acc, parsedTarget.repo ? `repo:${parsedTarget.org}/${parsedTarget.repo}` : `org:${parsedTarget.org}`];
