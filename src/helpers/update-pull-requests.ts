@@ -21,6 +21,10 @@ type IssueEvent = {
   commented_at?: string;
 };
 
+function isIssueEvent(event: object): event is IssueEvent {
+  return "created_at" in event;
+}
+
 export async function updatePullRequests(context: Context) {
   if (!context.config.repos.monitor.length) {
     return context.logger.info("No organizations or repo have been specified, skipping.");
@@ -41,12 +45,15 @@ export async function updatePullRequests(context: Context) {
         continue;
       }
       const activity = await getAllTimelineEvents(context, parseGitHubUrl(html_url));
-      const eventDates: Date[] = activity
-        .map((event) => {
-          const e = event as IssueEvent;
-          return new Date(e.created_at || e.updated_at || e.timestamp || e.commented_at || "");
-        })
-        .filter((date) => !isNaN(date.getTime()));
+      const eventDates: Date[] = activity.reduce<Date[]>((acc, event) => {
+        if (isIssueEvent(event)) {
+          const date = new Date(event.created_at || event.updated_at || event.timestamp || event.commented_at || "");
+          if (!isNaN(date.getTime())) {
+            acc.push(date);
+          }
+        }
+        return acc;
+      }, []);
 
       const lastActivityDate = new Date(Math.max(...eventDates.map((date) => date.getTime())));
 
