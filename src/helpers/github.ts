@@ -104,8 +104,13 @@ export async function isCiGreen({ octokit, logger, env }: Context, sha: string, 
   }
 }
 
-function parseTarget({ payload }: Context, target: string) {
-  const owner = payload.repository.owner?.login || "";
+function parseTarget({ payload, logger }: Context, target: string) {
+  if (!payload.repository.owner) {
+    const errorMessage = "No repository owner has been found, the target cannot be parsed.";
+    logger.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+  const owner = payload.repository.owner.login;
   const [orgParsed, repoParsed] = target.split("/");
   let repoTarget = null;
   if (orgParsed !== owner) {
