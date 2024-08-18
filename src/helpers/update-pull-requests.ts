@@ -26,22 +26,23 @@ function isIssueEvent(event: object): event is IssueEvent {
 }
 
 export async function updatePullRequests(context: Context) {
+  const { logger } = context;
   if (!context.config.repos.monitor.length) {
-    return context.logger.info("No organizations or repo have been specified, skipping.");
+    return logger.info("No organizations or repo have been specified, skipping.");
   }
 
   const pullRequests = await getOpenPullRequests(context, context.config.repos);
 
   if (!pullRequests?.length) {
-    return context.logger.info("Nothing to do.");
+    return logger.info("Nothing to do.");
   }
   for (const { html_url } of pullRequests) {
     try {
       const gitHubUrl = parseGitHubUrl(html_url);
       const pullRequestDetails = await getPullRequestDetails(context, gitHubUrl);
-      context.logger.debug(`Processing pull-request ${html_url}...`);
+      logger.debug(`Processing pull-request ${html_url}...`);
       if (pullRequestDetails.merged || pullRequestDetails.closed_at) {
-        context.logger.info(`The pull request ${html_url} is already merged or closed, nothing to do.`);
+        logger.info(`The pull request ${html_url} is already merged or closed, nothing to do.`);
         continue;
       }
       const activity = await getAllTimelineEvents(context, parseGitHubUrl(html_url));
@@ -58,18 +59,18 @@ export async function updatePullRequests(context: Context) {
       const lastActivityDate = new Date(Math.max(...eventDates.map((date) => date.getTime())));
 
       const requirements = await getMergeTimeoutAndApprovalRequiredCount(context, pullRequestDetails.author_association);
-      context.logger.debug(
+      logger.debug(
         `Requirements according to association ${pullRequestDetails.author_association}: ${JSON.stringify(requirements)} with last activity date: ${lastActivityDate}`
       );
       if (isNaN(lastActivityDate.getTime())) {
-        context.logger.info(`PR ${html_url} does not seem to have any activity, nothing to do.`);
+        logger.info(`PR ${html_url} does not seem to have any activity, nothing to do.`);
       } else if (isPastOffset(lastActivityDate, requirements.mergeTimeout)) {
         await attemptMerging(context, { gitHubUrl, htmlUrl: html_url, requirements, lastActivityDate, pullRequestDetails });
       } else {
-        context.logger.info(`PR ${html_url} has activity up until (${lastActivityDate}), nothing to do.`);
+        logger.info(`PR ${html_url} has activity up until (${lastActivityDate}), nothing to do.`);
       }
     } catch (e) {
-      context.logger.error(`Could not process pull-request ${html_url} for auto-merge: ${e}`);
+      logger.error(`Could not process pull-request ${html_url} for auto-merge: ${e}`);
     }
   }
 }
