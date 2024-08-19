@@ -112,11 +112,14 @@ function parseTarget({ payload, logger }: Context, target: string) {
   }
   const owner = payload.repository.owner.login;
   const [orgParsed, repoParsed] = target.split("/");
-  let repoTarget = null;
-  if (orgParsed !== owner) {
-    return null;
-  } else if (repoParsed) {
+  let repoTarget;
+  if (repoParsed) {
+    if (orgParsed !== owner) {
+      return null;
+    }
     repoTarget = repoParsed;
+  } else {
+    repoTarget = orgParsed;
   }
   return { org: owner, repo: repoTarget };
 }
