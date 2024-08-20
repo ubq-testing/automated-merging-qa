@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { db } from "./db";
+import searchPullRequest from "./routes/search-pull-requests.json";
 
 /**
  * Intercepts the routes and returns a custom payload
@@ -31,5 +32,8 @@ export const handlers = [
   }),
   http.get("https://api.github.com/repos/:org/:repo/pulls/:id", ({ params: { id } }) => {
     return HttpResponse.json(db.pullRequests.findFirst({ where: { id: { equals: Number(id) } } }));
+  }),
+  http.get("https://api.github.com/search/issues", () => {
+    return HttpResponse.json(searchPullRequest);
   }),
 ];

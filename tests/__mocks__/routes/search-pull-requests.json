@@ -1,0 +1,79 @@
+{
+  "total_count": 1,
+  "incomplete_results": false,
+  "items": [
+    {
+      "url": "https://api.github.com/repos/ubiquibot/automated-merging/issues/1",
+      "repository_url": "https://api.github.com/repos/ubiquibot/automated-merging",
+      "labels_url": "https://api.github.com/repos/ubiquibot/automated-merging/issues/1/labels{/name}",
+      "comments_url": "https://api.github.com/repos/ubiquibot/automated-merging/issues/1/comments",
+      "events_url": "https://api.github.com/repos/ubiquibot/automated-merging/issues/1/events",
+      "html_url": "https://github.com/ubiquibot/automated-merging/pull/1",
+      "id": 2386558280,
+      "node_id": "PR_kwDOMQ8E8c50NzmN",
+      "number": 1,
+      "title": "feat: pull requests are automatically merged based on their activity",
+      "user": {
+        "login": "gentlementlegen",
+        "id": 9807008,
+        "node_id": "MDQ6VXNlcjk4MDcwMDg=",
+        "avatar_url": "https://avatars.githubusercontent.com/u/9807008?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/gentlementlegen",
+        "html_url": "https://github.com/gentlementlegen",
+        "followers_url": "https://api.github.com/users/gentlementlegen/followers",
+        "following_url": "https://api.github.com/users/gentlementlegen/following{/other_user}",
+        "gists_url": "https://api.github.com/users/gentlementlegen/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/gentlementlegen/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/gentlementlegen/subscriptions",
+        "organizations_url": "https://api.github.com/users/gentlementlegen/orgs",
+        "repos_url": "https://api.github.com/users/gentlementlegen/repos",
+        "events_url": "https://api.github.com/users/gentlementlegen/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/gentlementlegen/received_events",
+        "type": "User",
+        "site_admin": false
+      },
+      "labels": [
+
+      ],
+      "state": "open",
+      "locked": false,
+      "assignee": null,
+      "assignees": [
+
+      ],
+      "milestone": null,
+      "comments": 24,
+      "created_at": "2024-07-02T15:25:13Z",
+      "updated_at": "2024-07-28T04:37:16Z",
+      "closed_at": null,
+      "author_association": "CONTRIBUTOR",
+      "active_lock_reason": null,
+      "draft": false,
+      "pull_request": {
+        "url": "https://api.github.com/repos/ubiquibot/automated-merging/pulls/1",
+        "html_url": "https://github.com/ubiquibot/automated-merging/pull/1",
+        "diff_url": "https://github.com/ubiquibot/automated-merging/pull/1.diff",
+        "patch_url": "https://github.com/ubiquibot/automated-merging/pull/1.patch",
+        "merged_at": null
+      },
+      "body": "Resolves https://github.com/ubiquibot/plugins-wishlist/issues/20",
+      "reactions": {
+        "url": "https://api.github.com/repos/ubiquibot/automated-merging/issues/1/reactions",
+        "total_count": 0,
+        "+1": 0,
+        "-1": 0,
+        "laugh": 0,
+        "hooray": 0,
+        "confused": 0,
+        "heart": 0,
+        "rocket": 0,
+        "eyes": 0
+      },
+      "timeline_url": "https://api.github.com/repos/ubiquibot/automated-merging/issues/1/timeline",
+      "performed_via_github_app": null,
+      "state_reason": null,
+      "score": 1.0
+    }
+  ]
+}
