@@ -41,15 +41,30 @@ export const mergeTimeoutSchema = T.Object(
   { default: {} }
 );
 
+export const reposSchema = T.Object(
+  {
+    /**
+     * Repositories to watch for updates
+     */
+    monitor: T.Array(T.String({ minLength: 1 }), { default: [] }),
+    /**
+     * Repositories to ignore updates from
+     */
+    ignore: T.Array(T.String(), { default: [] }),
+  },
+  { default: {} }
+);
+
 export const pluginSettingsSchema = T.Object({
   approvalsRequired: approvalsRequiredSchema,
   mergeTimeout: mergeTimeoutSchema,
   /**
-   * The location of the database
+   * The list of organizations or repositories to watch for updates.
    */
-  databaseUrl: T.String({ default: "database/sql.db" }),
+  repos: reposSchema,
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
 
 export type PluginSettings = StaticDecode<typeof pluginSettingsSchema>;
+export type ReposWatchSettings = StaticDecode<typeof reposSchema>;
