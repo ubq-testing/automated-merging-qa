@@ -34,7 +34,6 @@ export async function updatePullRequests(context: Context) {
     const owner = context.payload.repository.owner;
     if (owner) {
       logger.info(`No organizations or repo have been specified, will default to the organization owner: ${owner.login}.`);
-      context.config.repos.monitor.push(owner.login);
     } else {
       return logger.error("Could not set a default organization to watch, skipping.");
     }
