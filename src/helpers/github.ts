@@ -117,7 +117,7 @@ function parseTarget({ payload, logger }: Context, target: string) {
     }
     repoTarget = repoParsed;
   } else {
-    repoTarget = orgParsed;
+    repoTarget = null;
   }
   return { org: owner, repo: repoTarget };
 }
