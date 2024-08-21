@@ -27,8 +27,15 @@ function isIssueEvent(event: object): event is IssueEvent {
 
 export async function updatePullRequests(context: Context) {
   const { logger } = context;
+
   if (!context.config.repos.monitor.length) {
-    return logger.info("No organizations or repo have been specified, skipping.");
+    const owner = context.payload.repository.owner;
+    if (owner) {
+      logger.info(`No organizations or repo have been specified, will default to the organization owner: ${owner}.`);
+      context.config.repos.monitor.push(owner.login);
+    } else {
+      return logger.error("Could not set a default organization to watch, skipping.");
+    }
   }
 
   const pullRequests = await getOpenPullRequests(context, context.config.repos);
