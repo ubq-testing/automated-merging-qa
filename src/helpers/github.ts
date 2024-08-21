@@ -151,8 +151,10 @@ export async function getOpenPullRequests(context: Context, targets: ReposWatchS
     }, []),
   ];
   try {
+    const query = `is:pr is:open draft:false ${filter.join(" ")}`;
+    logger.debug(`Querying GitHub Search with query: ${query}`);
     const data = await octokit.paginate(octokit.rest.search.issuesAndPullRequests, {
-      q: `is:pr is:open draft:false ${filter.join(" ")}`,
+      q: query,
     });
     return data.flat();
   } catch (e) {
