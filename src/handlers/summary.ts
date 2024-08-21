@@ -8,7 +8,7 @@ export interface ResultInfo {
 
 function generateGitHubSummary(context: Context, urls: ResultInfo[]): string {
   let monitored = `Monitored: [${context.config.repos.monitor.join(" | ")}]\n\n`;
-  monitored += `Ignored: ${context.config.repos.ignore.join(" | ")}\n\n`;
+  monitored += `Ignored: [${context.config.repos.ignore.join(" | ")}]\n\n`;
   monitored += urls
     .map(({ url, merged }) => {
       const status = merged ? `<span>🟢 merged</span>` : `<span>🔵 no change</span>`;
