@@ -148,7 +148,7 @@ export async function getOpenPullRequests(context: Context, targets: ReposWatchS
     }, []),
   ];
   if (!monitor.length) {
-    filter.push(`org: ${context.payload.repository.owner?.login}`);
+    filter.push(`org:${context.payload.repository.owner?.login}`);
   }
   try {
     const query = `is:pr is:open draft:false ${filter.join(" ")}`;
