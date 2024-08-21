@@ -131,9 +131,6 @@ export async function getOpenPullRequests(context: Context, targets: ReposWatchS
   const { octokit, logger } = context;
   // If no repo to monitor is set, defaults to the organization
   const monitor = [...targets.monitor];
-  if (!monitor.length) {
-    monitor.push(`org: ${context.payload.repository.owner?.login}`);
-  }
   const filter = [
     ...monitor.reduce<string[]>((acc, curr) => {
       const parsedTarget = parseTarget(context, curr);
@@ -150,6 +147,9 @@ export async function getOpenPullRequests(context: Context, targets: ReposWatchS
       return acc;
     }, []),
   ];
+  if (!monitor.length) {
+    filter.push(`org: ${context.payload.repository.owner?.login}`);
+  }
   try {
     const query = `is:pr is:open draft:false ${filter.join(" ")}`;
     logger.debug(`Querying GitHub Search with query: ${query}`);
