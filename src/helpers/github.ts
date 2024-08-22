@@ -106,9 +106,7 @@ export async function isCiGreen({ octokit, logger, env }: Context, sha: string, 
 
 function parseTarget({ payload, logger }: Context, target: string) {
   if (!payload.repository.owner) {
-    const errorMessage = "No repository owner has been found, the target cannot be parsed.";
-    logger.error(errorMessage);
-    throw new Error(errorMessage);
+    throw new Error(logger.error("No repository owner has been found, the target cannot be parsed.").logMessage.raw);
   }
   const owner = payload.repository.owner.login;
   const [orgParsed, repoParsed] = target.split("/");
@@ -133,9 +131,6 @@ export async function getOpenPullRequests(context: Context, targets: ReposWatchS
   const { octokit, logger } = context;
   // If no repo to monitor is set, defaults to the organization
   const monitor = [...targets.monitor];
-  if (!monitor.length) {
-    monitor.push(`org: ${context.payload.repository.owner?.login}`);
-  }
   const filter = [
     ...monitor.reduce<string[]>((acc, curr) => {
       const parsedTarget = parseTarget(context, curr);
@@ -152,9 +147,14 @@ export async function getOpenPullRequests(context: Context, targets: ReposWatchS
       return acc;
     }, []),
   ];
+  if (!monitor.length) {
+    filter.push(`org:${context.payload.repository.owner?.login}`);
+  }
   try {
+    const query = `is:pr is:open draft:false ${filter.join(" ")}`;
+    logger.debug(`Querying GitHub Search with query: ${query}`);
     const data = await octokit.paginate(octokit.rest.search.issuesAndPullRequests, {
-      q: `is:pr is:open draft:false ${filter.join(" ")}`,
+      q: query,
     });
     return data.flat();
   } catch (e) {

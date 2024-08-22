@@ -20,8 +20,6 @@ export async function plugin(inputs: PluginInputs, env: Env) {
     logger: new Logs("debug"),
   };
 
-  context.logger.info(
-    `Will check the following repos / orgs: [${context.config.repos.monitor.join(", ")}] and ignore [${context.config.repos.ignore.join(", ")}]`
-  );
+  context.logger.info("Will check the following repos", { ...context.config.repos });
   return await updatePullRequests(context);
 }

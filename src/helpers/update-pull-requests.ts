@@ -1,6 +1,7 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import ms from "ms";
 import { getAllTimelineEvents } from "../handlers/github-events";
+import { generateSummary, ResultInfo } from "../handlers/summary";
 import { Context } from "../types";
 import {
   getApprovalCount,
@@ -27,8 +28,15 @@ function isIssueEvent(event: object): event is IssueEvent {
 
 export async function updatePullRequests(context: Context) {
   const { logger } = context;
+  const results: ResultInfo[] = [];
+
   if (!context.config.repos.monitor.length) {
-    return logger.info("No organizations or repo have been specified, skipping.");
+    const owner = context.payload.repository.owner;
+    if (owner) {
+      logger.info(`No organizations or repo have been specified, will default to the organization owner: ${owner.login}.`);
+    } else {
+      return logger.error("Could not set a default organization to watch, skipping.");
+    }
   }
 
   const pullRequests = await getOpenPullRequests(context, context.config.repos);
@@ -36,11 +44,13 @@ export async function updatePullRequests(context: Context) {
   if (!pullRequests?.length) {
     return logger.info("Nothing to do.");
   }
+
   for (const { html_url } of pullRequests) {
+    let isMerged = false;
     try {
       const gitHubUrl = parseGitHubUrl(html_url);
       const pullRequestDetails = await getPullRequestDetails(context, gitHubUrl);
-      logger.debug(`Processing pull-request ${html_url}...`);
+      logger.debug(`Processing pull-request ${html_url} ...`);
       if (pullRequestDetails.merged || pullRequestDetails.closed_at) {
         logger.info(`The pull request ${html_url} is already merged or closed, nothing to do.`);
         continue;
@@ -65,14 +75,16 @@ export async function updatePullRequests(context: Context) {
       if (isNaN(lastActivityDate.getTime())) {
         logger.info(`PR ${html_url} does not seem to have any activity, nothing to do.`);
       } else if (isPastOffset(lastActivityDate, requirements.mergeTimeout)) {
-        await attemptMerging(context, { gitHubUrl, htmlUrl: html_url, requirements, lastActivityDate, pullRequestDetails });
+        isMerged = await attemptMerging(context, { gitHubUrl, htmlUrl: html_url, requirements, lastActivityDate, pullRequestDetails });
       } else {
         logger.info(`PR ${html_url} has activity up until (${lastActivityDate}), nothing to do.`);
       }
     } catch (e) {
       logger.error(`Could not process pull-request ${html_url} for auto-merge: ${e}`);
     }
+    results.push({ url: html_url, merged: isMerged });
   }
+  await generateSummary(context, results);
 }
 
 async function attemptMerging(
@@ -89,12 +101,14 @@ async function attemptMerging(
     if (await isCiGreen(context, data.pullRequestDetails.head.sha, data.gitHubUrl)) {
       context.logger.info(`Pull-request ${data.htmlUrl} is past its due date (${data.requirements.mergeTimeout} after ${data.lastActivityDate}), will merge.`);
       await mergePullRequest(context, data.gitHubUrl);
+      return true;
     } else {
       context.logger.info(`Pull-request ${data.htmlUrl} (sha: ${data.pullRequestDetails.head.sha}) does not pass all CI tests, won't merge.`);
     }
   } else {
     context.logger.info(`Pull-request ${data.htmlUrl} does not have sufficient reviewer approvals to be merged.`);
   }
+  return false;
 }
 
 function isPastOffset(lastActivityDate: Date, offset: string): boolean {
