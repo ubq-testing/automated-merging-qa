@@ -23,6 +23,7 @@ function generateGitHubSummary(context: Context, urls: ResultInfo[]): string {
       })
       .join("\n")
   );
+  output.push("\n");
   output.push("🔵 = merged");
   output.push("⚫️ = unmerged");
   output.push("\n</samp>\n");
