@@ -7,15 +7,18 @@ export interface ResultInfo {
 }
 
 function generateGitHubSummary(context: Context, urls: ResultInfo[]): string {
-  let monitored = `Monitored: [${context.config.repos.monitor.join(" | ")}]\n\n`;
-  monitored += `Ignored: [${context.config.repos.ignore.join(" | ")}]\n\n`;
-  monitored += urls
+  let output = "## Repositories\n\n";
+  output += `Monitored: [${context.config.repos.monitor.join(" | ")}]\n\n`;
+  output += `Ignored: [${context.config.repos.ignore.join(" | ")}]\n\n`;
+  output += "## Merging\n\n";
+  output += "🟢: merged\n🔵: no change\n\n";
+  output += urls
     .map(({ url, merged }) => {
-      const status = merged ? `<span>🟢 merged</span>` : `<span>🔵 no change</span>`;
-      return `- [${url}](${url}) - ${status}`;
+      const status = merged ? `<span>🟢</span>` : `<span>🔵</span>`;
+      return `- ${status} - [${url}](${url})`;
     })
     .join("\n");
-  return monitored;
+  return output;
 }
 
 export async function generateSummary(context: Context, results: ResultInfo[]) {
