@@ -45,9 +45,8 @@ export async function updatePullRequests(context: Context) {
     return logger.info("Nothing to do.");
   }
 
-  let isMerged = false;
   for (const { html_url } of pullRequests) {
-    isMerged = false;
+    let isMerged = false;
     try {
       const gitHubUrl = parseGitHubUrl(html_url);
       const pullRequestDetails = await getPullRequestDetails(context, gitHubUrl);
