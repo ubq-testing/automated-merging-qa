@@ -23,9 +23,9 @@ function generateGitHubSummary(context: Context, urls: ResultInfo[]): string {
       })
       .join("\n")
   );
-  output.push("\n</samp>\n");
   output.push("🔵 = merged");
   output.push("⚫️ = unmerged");
+  output.push("\n</samp>\n");
   output.push("## Configuration\n\n");
   output.push("### Watching Repositories\n\n");
   output.push(context.config.repos.monitor.map((o) => `- [${o}](${target}/${o})`).join("\n"));
