@@ -1,4 +1,5 @@
 import * as core from "@actions/core";
+import { parseGitHubUrl } from "../helpers/github";
 import { Context } from "../types";
 
 export interface ResultInfo {
@@ -7,18 +8,31 @@ export interface ResultInfo {
 }
 
 function generateGitHubSummary(context: Context, urls: ResultInfo[]): string {
-  let output = "## Repositories\n\n";
-  output += `Monitored: [${context.config.repos.monitor.join(" | ")}]\n\n`;
-  output += `Ignored: [${context.config.repos.ignore.join(" | ")}]\n\n`;
-  output += "## Merging\n\n";
-  output += "🟢: merged\n🔵: no change\n\n";
-  output += urls
-    .map(({ url, merged }) => {
-      const status = merged ? `<span>🟢</span>` : `<span>🔵</span>`;
-      return `- ${status} - [${url}](${url})`;
-    })
-    .join("\n");
-  return output;
+  const target = `https://github.com/${context.payload.repository.owner?.login}`;
+  const output: string[] = ["## Merge report\n\n"];
+  output.push("<samp>\n");
+  output.push("| Merged | ID |");
+  output.push("|---|---|");
+  output.push(
+    urls
+      .sort((a) => (a.merged ? -1 : 1))
+      .map(({ url, merged }) => {
+        const status = merged ? `<span>🔵</span>` : `<span>⚫️</span>`;
+        const { repo, issue_number } = parseGitHubUrl(url);
+        return `| ${status} | [${repo}#${issue_number}](${url}) |`;
+      })
+      .join("\n")
+  );
+  output.push("\n");
+  output.push("🔵 = merged");
+  output.push("⚫️ = unmerged");
+  output.push("\n</samp>\n");
+  output.push("## Configuration\n\n");
+  output.push("### Watching Repositories\n\n");
+  output.push(context.config.repos.monitor.map((o) => `- [${o}](${target}/${o})`).join("\n"));
+  output.push("### Ignored Repositories\n\n");
+  output.push(context.config.repos.ignore.map((o) => `- [${o}](${target}/${o})`).join("\n"));
+  return output.join("\n");
 }
 
 export async function generateSummary(context: Context, results: ResultInfo[]) {
