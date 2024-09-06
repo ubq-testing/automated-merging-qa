@@ -154,6 +154,59 @@ describe("Action tests", () => {
     expect(mergePullRequest).toHaveBeenCalled();
   });
 
+  it("Should not close a PR if non-approved reviews are present", async () => {
+    server.use(
+      http.get(
+        "https://api.github.com/repos/:org/:repo/pulls/:id/reviews",
+        () => {
+          return HttpResponse.json([{ id: 1, state: "COMMENTED", author_association: "CONTRIBUTOR" }, { id: 2, state: "APPROVED", author_association: "NONE" }]);
+        },
+        { once: true }
+      )
+    );
+    jest.mock(actionsGithubPackage, () => ({
+      context: {
+        repo: {
+          owner: {
+            login: "ubiquibot",
+          },
+        },
+        workflow,
+        payload: {
+          inputs: {
+            eventName: "push",
+            settings: JSON.stringify({
+              repos: { monitor: [monitor] },
+            }),
+            eventPayload: JSON.stringify({
+              pull_request: {
+                html_url: htmlUrl,
+              },
+              repository: {
+                owner: "ubiquibot",
+              },
+            }),
+            env: {
+              workflowName: workflow,
+            },
+          },
+        },
+      },
+    }));
+    const mergePullRequest = jest.fn();
+    jest.mock(githubHelpersPath, () => {
+      const actualModule = jest.requireActual(githubHelpersPath) as object;
+      return {
+        __esModule: true,
+        ...actualModule,
+        mergePullRequest,
+      };
+    });
+    const run = (await import("../src/action")).run;
+    await expect(run()).resolves.toMatchObject({ status: 200 });
+    expect(mergePullRequest).not.toHaveBeenCalled();
+  });
+
   it("Should pick the timeout according to the assignees status", async () => {
     const contributorMergeTimeout = "7 days";
     const collaboratorMergeTimeout = "3.5 days";
