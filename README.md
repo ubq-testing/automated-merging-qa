@@ -1,6 +1,6 @@
 # `@ubiquibot/automated-merging`
 
-Automatically merge pull-requests based on the reviewer count, the time elapsed since the last activity, depending 
+Automatically merge pull-requests based on the reviewer count, the time elapsed since the last activity, depending
 on the association of the pull-request author.
 
 ## Configuration example
