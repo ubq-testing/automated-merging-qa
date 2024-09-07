@@ -62,7 +62,7 @@ describe("Action tests", () => {
             eventName: "push",
             settings: JSON.stringify({
               repos: { monitor: [monitor] },
-              rolesWithAuthority: ["COLLABORATOR", "MEMBER", "OWNER"],
+              allowedReviewerRoles: ["COLLABORATOR", "MEMBER", "OWNER"],
             }),
             eventPayload: JSON.stringify({
               pull_request: {
@@ -231,7 +231,7 @@ describe("Action tests", () => {
           collaborator: collaboratorMinimumApprovalsRequired,
           contributor: contributorMinimumApprovalsRequired,
         },
-        rolesWithAuthority: ["COLLABORATOR", "MEMBER", "OWNER"],
+        allowedReviewerRoles: ["COLLABORATOR", "MEMBER", "OWNER"],
       },
       octokit: new Octokit(),
     } as unknown as Context;
@@ -284,7 +284,7 @@ describe("Action tests", () => {
       },
       workflow: "other workflow",
       config: {
-        rolesWithAuthority: ["COLLABORATOR", "MEMBER", "OWNER"],
+        allowedReviewerRoles: ["COLLABORATOR", "MEMBER", "OWNER"],
       },
       octokit: new Octokit(),
       env: {
