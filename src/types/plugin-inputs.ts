@@ -55,6 +55,8 @@ export const reposSchema = T.Object(
   { default: {} }
 );
 
+const rolesWithAuthority = T.Array(T.String(), { default: ["COLLABORATOR", "MEMBER", "OWNER"] })
+
 export const pluginSettingsSchema = T.Object({
   approvalsRequired: approvalsRequiredSchema,
   mergeTimeout: mergeTimeoutSchema,
@@ -62,6 +64,9 @@ export const pluginSettingsSchema = T.Object({
    * The list of organizations or repositories to watch for updates.
    */
   repos: reposSchema,
+  rolesWithAuthority: T.Transform(rolesWithAuthority)
+    .Decode((roles) => roles.map((role) => role.toUpperCase()))
+    .Encode((roles) => roles.map((role) => role.toUpperCase()))
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
