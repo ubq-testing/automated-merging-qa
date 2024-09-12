@@ -24,16 +24,22 @@ export interface Requirements {
  * statuses, the longest timeout is chosen.
  */
 export async function getMergeTimeoutAndApprovalRequiredCount(context: Context, authorAssociation: string): Promise<Requirements> {
-  const { config: { allowedReviewerRoles } } = context;
+  const { config: { mergeTimeout, approvalsRequired } } = context;
   const timeoutCollaborator = {
-    mergeTimeout: context.config.mergeTimeout.collaborator,
-    requiredApprovalCount: context.config.approvalsRequired.collaborator,
+    mergeTimeout: mergeTimeout.collaborator,
+    requiredApprovalCount: approvalsRequired.collaborator,
   };
   const timeoutContributor = {
-    mergeTimeout: context.config.mergeTimeout.contributor,
-    requiredApprovalCount: context.config.approvalsRequired.contributor,
+    mergeTimeout: mergeTimeout.contributor,
+    requiredApprovalCount: approvalsRequired.contributor,
   };
-  return allowedReviewerRoles.includes(authorAssociation) ? timeoutCollaborator : timeoutContributor;
+
+  /**
+   * Hardcoded roles here because we need to determine the timeouts
+   * separate from `allowedReviewerRoles` which introduces 
+   * potential unintended user errors and logic issues.
+   */
+  return ["COLLABORATOR", "MEMBER", "OWNER"].includes(authorAssociation) ? timeoutCollaborator : timeoutContributor;
 }
 
 export async function getApprovalCount({ octokit, logger, config: { allowedReviewerRoles } }: Context, { owner, repo, issue_number: pullNumber }: IssueParams) {
